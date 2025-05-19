@@ -1,268 +1,153 @@
-<div align="center">
+# 크롬 익스텐션(Material Picker) 개발 팀 가이드
 
-<picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/99cb6303-64e4-4bed-bf3f-35735353e6de" />
-    <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/a5dbf71c-c509-4c4f-80f4-be88a1943b0a" />
-    <img alt="Logo" src="https://github.com/user-attachments/assets/99cb6303-64e4-4bed-bf3f-35735353e6de" />
-</picture>
+## 소개
 
-![](https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=black)
-![](https://img.shields.io/badge/Typescript-3178C6?style=flat-square&logo=typescript&logoColor=white)
-![](https://badges.aleen42.com/src/vitejs.svg)
+이 프로젝트는 [Chrome Extension boilerplate](https://github.com/Jonghakseo/chrome-extension-boilerplate-react-vite)를 기반으로 하여 React + TypeScript + Vite 조합으로 크롬 확장 프로그램을 개발하는 프로젝트입니다. Vite와 Turborepo를 활용하여 빠른 빌드 속도와 모듈화된 개발 환경을 제공합니다.
 
-![GitHub action badge](https://github.com/Jonghakseo/chrome-extension-boilerplate-react-vite/actions/workflows/build-zip.yml/badge.svg)
-![GitHub action badge](https://github.com/Jonghakseo/chrome-extension-boilerplate-react-vite/actions/workflows/lint.yml/badge.svg)
+> 이 보일러플레이트는 React와 TypeScript를 사용하여 Chrome/Firefox 확장 프로그램을 만드는 데 도움을 줍니다. Vite와 Turborepo를 사용하여 빌드 속도와 개발 경험을 향상시킵니다.
 
-<img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https://github.com/Jonghakseo/chrome-extension-boilerplate-react-viteFactions&count_bg=%23#222222&title_bg=%23#454545&title=😀&edge_flat=true" alt="hits"/>
-<a href="https://discord.gg/4ERQ6jgV9a" target="_blank"><img src="https://discord.com/api/guilds/1263404974830915637/widget.png"/></a>
+## 주요 기술 스택 및 기능
 
-> This boilerplate
-> has [Legacy version](https://github.com/Jonghakseo/chrome-extension-boilerplate-react-vite/tree/legacy)
+* [React 19](https://reactjs.org/)
+* [TypeScript](https://www.typescriptlang.org/)
+* [Tailwind CSS](https://tailwindcss.com/)
+* [Vite](https://vitejs.dev/) with [Rollup](https://rollupjs.org/)
+* [Turborepo](https://turbo.build/repo)
+* [Prettier](https://prettier.io/) & [ESLint](https://eslint.org/)
+* [Manifest V3](https://developer.chrome.com/docs/extensions/mv3/intro/)
+* 사이드 패널, content script, popup 등 다양한 확장 구조 대응
 
-</div>
+## 1. 프로젝트 개요
 
-> [!NOTE]
-> This project is listed in the [Awesome Vite](https://github.com/vitejs/awesome-vite)
+**프로젝트명:** Material Picker
 
-> [!TIP]
-> Share storage state between all pages
->
-> https://github.com/user-attachments/assets/3b8e189f-6443-490e-a455-4f9570267f8c
+**목표:**
+웹페이지 내 이미지 형태로 삽입된 차트 데이터를 사용자가 쉽게 접근, 커스터마이징 및 출처 확인할 수 있도록 지원하는 Chrome 확장 프로그램 개발
 
-## Table of Contents
+**팀 구성:** 총 4명
 
-- [Intro](#intro)
-- [Features](#features)
-- [Structure](#structure)
-    - [ChromeExtension](#structure-chrome-extension)
-    - [Packages](#structure-packages)
-    - [Pages](#structure-pages)
-- [Getting started](#getting-started)
-    - [Chrome](#getting-started-chrome)
-    - [Firefox](#getting-started-firefox)
-- [Install dependency](#install-dependency)
-    - [For root](#install-dependency-for-root)
-    - [For module](#install-dependency-for-module)
-- [Environment variables](#env-variables)
-    - [Add new](#env-variables-new)
-    - [Set via CLI](#env-variables-cli-set)
-- [Community](#community)
-- [Reference](#reference)
-- [Star History](#star-history)
-- [Contributors](#contributors)
+* chart-index 담당자 
+* chart-customization 담당자 
+* data-source 담당자
+* 아키텍처 설계 및 백엔드 담당 
 
-## Intro
+**기능 설명:**
 
-This boilerplate helps you create Chrome/Firefox extensions using React and Typescript. It improves
-the build speed and development experience by using Vite and Turborepo.
+1. **차트 인덱싱**: `<img>` 태그로 삽입된 차트를 탐지하여 사이드 패널에서 바로 접근 가능하도록 인덱스 생성
+2. **차트 커스터마이징**: 이미지 차트를 서버로 보내 OCR/LLM 분석 후 테이블화하고 다양한 형태로 시각화 및 색상 변경 가능
+3. **데이터 출처 생성**: DOM 분석 및 이미지 OCR 결과를 통해 자동으로 데이터 출처 문장 생성
 
-## Features
+## 2. 크롬 익스텐션 구조 완전 정복
 
-- [React19](https://reactjs.org/)
-- [TypeScript](https://www.typescriptlang.org/)
-- [Tailwindcss](https://tailwindcss.com/)
-- [Vite](https://vitejs.dev/) with [Rollup](https://rollupjs.org/)
-- [Turborepo](https://turbo.build/repo)
-- [Prettier](https://prettier.io/)
-- [ESLint](https://eslint.org/)
-- [Chrome Extensions Manifest Version 3](https://developer.chrome.com/docs/extensions/mv3/intro/)
-- [Custom i18n package](/packages/i18n/)
-- [Custom HMR (Hot Module Rebuild) plugin](/packages/hmr/)
-- [End-to-end testing with WebdriverIO](https://webdriver.io/)
+### Manifest V3
 
-## Getting started
+크롬 확장 프로그램의 핵심 설정 파일로, 확장 프로그램의 권한, script 연결 정보 등을 정의합니다.
 
-1. When you're using Windows run this:
-    - `git config --global core.eol lf`
-    - `git config --global core.autocrlf input`
+### 주요 모듈 설명
 
-   **This will set the EOL (End of line) character to be the same as on Linux/macOS. Without this, our bash script won't
-   work, and you will have conflicts with developers on Linux/macOS.**
-2. Clone this repository.( ```git clone https://github.com/Jonghakseo/chrome-extension-boilerplate-react-vite``` )
-3. Ensure your node version is >= than in `.nvmrc` file, recommend to
-   use [nvm](https://github.com/nvm-sh/nvm?tab=readme-ov-file#intro)
-4. Edit `/packages/i18n/locales/`{your locale(s)}/`messages.json`
-5. In the objects `extensionDescription` and `extensionName`, change the `message` fields (leave `description` alone)
-6. In `/.package.json`, change the `version` to the desired version of your extension.
-7. Install pnpm globally: `npm install -g pnpm` (ensure your node version >= 22.12.0)
-8. Run `pnpm install`
+#### ✅ `content script` (`pages/content/`)
 
-Then, depending on the target browser:
+* 현재 웹페이지에 삽입되어 DOM 접근 가능
+* 이미지 차트 탐색, 클릭 이벤트 감지
+* `chrome.runtime.sendMessage()` 등을 이용해 백그라운드 혹은 사이드패널과 통신
 
-### For Chrome: <a name="getting-started-chrome"></a>
+#### ✅ `side-panel` (`pages/side-panel/`)
 
-1. Run:
-    - Dev: `pnpm dev` (on Windows, you should run as administrator;
-      see [issue#456](https://github.com/Jonghakseo/chrome-extension-boilerplate-react-vite/issues/456))
-    - Prod: `pnpm build`
-2. Open in browser - `chrome://extensions`
-3. Check - <kbd>Developer mode</kbd>
-4. Click - <kbd>Load unpacked</kbd> in the upper left corner
-5. Select the `dist` directory from the boilerplate project
+* 크롬 114 이상에서 지원되는 사이드뷰 패널
+* Material Picker의 주요 UI: 차트 목록, 커스터마이징 툴, 데이터 출처 표시
 
-### For Firefox: <a name="getting-started-firefox"></a>
+#### ✅ `content-ui` (`pages/content-ui/`)
 
-1. Run:
-    - Dev: `pnpm dev:firefox`
-    - Prod: `pnpm build:firefox`
-2. Open in browser - `about:debugging#/runtime/this-firefox`
-3. Click - <kbd>Load Temporary Add-on...</kbd> in the upper right corner
-4. Select the `./dist/manifest.json` file from the boilerplate project
+* 웹페이지에 삽입되는 React UI (예: 이미지 위에 뜨는 버튼)
+* Shadow DOM 기반 삽입 가능
 
-> [!NOTE]
-> In Firefox, you load add-ons in temporary mode. That means they'll disappear after each browser close. You have to
-> load the add-on on every browser launch.
+#### ✅ `background` (`chrome-extension/src/background/`)
 
-## Install dependency for turborepo: <a name="install-dependency"></a>
+* 브라우저 백그라운드에서 항상 동작하는 JS 환경
+* API 통신, 알림, 이벤트 핸들링 등을 담당
 
-### For root: <a name="install-dependency-for-root"></a>
+#### ✅ `packages` (공통 코드)
 
-1. Run `pnpm i <package> -w`
+* `shared/`: 유틸, 타입, 상수, 훅 등 공통 코드
+* `storage/`: `chrome.storage` 연동을 위한 헬퍼
+* `ui/`: 팀 공통 UI 컴포넌트 모음
+* `env/`, `hmr/`, `i18n/`: 환경 변수, HMR, 다국어 처리
 
-### For module: <a name="install-dependency-for-module"></a>
-
-1. Run `pnpm i <package> -F <module name>`
-
-`package` - Name of the package you want to install e.g. `nodemon` \
-`module-name` - You can find it inside each `package.json` under the key `name`, e.g. `@extension/content-script`, you
-can use only `content-script` without `@extension/` prefix
-
-## How do I disable modules I'm not using?
+### 디렉토리 구조 예시
 
 ```bash
-$ pnpm module-manager
+pages/
+├── side-panel/
+│   └── src/
+│       ├── components/              # 공통 UI 컴포넌트
+│       └── features/
+│           ├── chart-index/
+│           ├── chart-customization/
+│           └── data-source/
+├── content/
+│   └── src/
+│       ├── chart-detector.ts
+│       └── image-capture.ts
+└── content-ui/
+    └── src/
+        └── index.tsx
 ```
 
-Read: [Module Manager](packages/module-manager/README.md)
+## 3. 개발 환경 설정
 
-## Environment variables
+### 설치 순서
 
-Read: [Env Documentation](packages/env/README.md)
+```bash
+git clone []
+cd []
+pnpm install
+```
 
-## Boilerplate structure <a name="structure"></a>
+* `pnpm dev`: 개발 서버 실행
+* `pnpm build`: 배포용 빌드
 
-### Chrome extension <a name="structure-chrome-extension"></a>
+크롬에서 테스트하기:
 
-The extension lives in the `chrome-extension` directory and includes the following files:
+1. `chrome://extensions` 접속
+2. '개발자 모드' 활성화
+3. '압축 해제된 확장 프로그램 로드' → `dist` 디렉토리 선택
 
-- [`manifest.ts`](chrome-extension/manifest.ts) - script that outputs the `manifest.json`
-- [`src/background`](chrome-extension/src/background) - [background script](https://developer.chrome.com/docs/extensions/mv3/background_pages/)
-  (`background.service_worker` in manifest.json)
-- [`public`](chrome-extension/public/) - icons referenced in the manifest; content CSS for user's page injection
+### 의존성 설치
 
-> [!IMPORTANT]
-> To facilitate development, the boilerplate is configured to "Read and change all your data on all websites".
-> In production, it's best practice to limit the premissions to only the strictly necessary websites. See
-> [Declaring permissions](https://developer.chrome.com/docs/extensions/develop/concepts/declare-permissions)
-> and edit `manifest.js` accordingly.
+* 루트: `pnpm i <package> -w`
+* 모듈별: `pnpm i <package> -F <module>`
 
-### Pages <a name="structure-pages"></a>
+### 환경변수 설정
 
-Code that is transpiled to be part of the extension lives in the [pages](pages/) directory.
+* `.env` 또는 `packages/env` 참고
 
-- [
-  `content`](pages/content/) - [content scripts](https://developer.chrome.com/docs/extensions/develop/concepts/content-scripts)
-  (`content_scripts` in manifest.json)
-- [`content-ui`](pages/content-ui) - React UI rendered in the current page (you can see it at the very bottom when you
-  get started)
-  (`content_scripts` in manifest.json)
-- [
-  `content-runtime`](pages/content-runtime/src/) - [injected content scripts](https://developer.chrome.com/docs/extensions/develop/concepts/content-scripts#functionality);
-  this can be injected from `popup` like standard `content`
-- [
-  `devtools`](pages/devtools/) - [extend the browser DevTools](https://developer.chrome.com/docs/extensions/how-to/devtools/extend-devtools#creating)
-  (`devtools_page` in manifest.json)
-- [
-  `devtools-panel`](pages/devtools-panel/) - [DevTools panel](https://developer.chrome.com/docs/extensions/reference/api/devtools/panels)
-  for [devtools](pages/devtools/src/index.ts)
-- [
-  `new-tab`](pages/new-tab/) - [override the default New Tab page](https://developer.chrome.com/docs/extensions/develop/ui/override-chrome-pages)
-  (`chrome_url_overrides.newtab` in manifest.json)
-- [`options`](pages/options/) - [options page](https://developer.chrome.com/docs/extensions/develop/ui/options-page)
-  (`options_page` in manifest.json)
-- [`popup`](pages/popup/) - [popup](https://developer.chrome.com/docs/extensions/reference/api/action#popup) shown when
-  clicking the extension in the toolbar
-  (`action.default_popup` in manifest.json)
-- [
-  `side-panel`](pages/side-panel/) - [sidepanel (Chrome 114+)](https://developer.chrome.com/docs/extensions/reference/api/sidePanel)
-  (`side_panel.default_path` in manifest.json)
+## 4. 협업 전략 및 역할 분담
 
-### Packages <a name="structure-packages"></a>
+### 역할 예시
 
-Some shared packages:
+* **chart-index**: content script 내 이미지 탐색 로직, 인덱싱 UI
+* **chart-customization**: content-ui의 이미지 클릭 핸들링, 서버 API 호출 및 chart 렌더링
+* **data-source**: DOM 및 OCR 텍스트 파싱 → 출처 문장 생성, 관련 UI 구성
+* **PM/backend**: 전체 message flow 설계, 백엔드 구현 (OCR, LLM 연동 포함)
 
-- `dev-utils` - utilities for Chrome extension development (manifest-parser, logger)
-- `env` - exports object which contain all environment variables from `.env` and dynamically declared
-- `hmr` - custom HMR plugin for Vite, injection script for reload/refresh, HMR dev-server
-- `i18n` - custom internationalization package; provides i18n function with type safety and other validation
-- `shared` - shared code for the entire project (types, constants, custom hooks, components etc.)
-- `storage` - helpers for easier integration with [storage](https://developer.chrome.com/docs/extensions/reference/api/storage), e.g. local/session storages
-- `tailwind-config` - shared Tailwind config for entire project
-- `tsconfig` - shared tsconfig for the entire project
-- `ui` - function to merge your Tailwind config with the global one; you can save components here
-- `vite-config` - shared Vite config for the entire project
+### 협업 팁
 
-Other useful packages:
+* 공통 컴포넌트는 `packages/ui`에 저장
+* `chrome.runtime.sendMessage` 사용 시 message type/interface 명확하게 정의
+* `pnpm module-manager`로 사용하지 않는 기능 제거
+* Git PR 시 간단한 동작 캡쳐 첨부 권장
 
-- `zipper` - run `pnpm zip` to pack the `dist` folder into `extension-YYYYMMDD-HHmmss.zip` inside the newly created
-  `dist-zip`
-- `module-manager` - run `pnpm module-manager` to enable/disable modules
-- `e2e` - run `pnpm e2e` for end-to-end tests of your zipped extension on different browsers
+## 5. 자주 마주치는 문제 해결법
 
-## Troubleshooting
+### 🔄 HMR(핫 리로드) 동작 안 할 때
 
-### Hot module reload seems to have frozen
+* `pnpm dev` 재실행
+* `turbo` 프로세스 수동 종료 필요 시: 프로세스 확인 후 수동 kill
 
-If saving source files doesn't cause the extension HMR code to trigger a reload of the browser page, try this:
+## 6. 참고 자료 모음
 
-1. Ctrl+C the development server and restart it (`pnpm run dev`)
-2. If you get a [`grpc` error](https://github.com/Jonghakseo/chrome-extension-boilerplate-react-vite/issues/612),
-   [kill the
-   `turbo` process](https://github.com/Jonghakseo/chrome-extension-boilerplate-react-vite/issues/612#issuecomment-2518982339)
-   and run `pnpm dev` again.
+* [Chrome Extension Docs](https://developer.chrome.com/docs/extensions/)
+* [Side Panel API](https://developer.chrome.com/docs/extensions/reference/api/sidePanel)
+* [Rollup Plugin](https://www.extend-chrome.dev/rollup-plugin)
+* [Turborepo](https://turbo.build/repo/docs)
 
-## Community
-
-To chat with other community members, you can join the [Discord](https://discord.gg/4ERQ6jgV9a) server.
-You can ask questions on that server, and you can also help others.
-
-Also, suggest new features or share any challenges you've faced while developing Chrome extensions!
-
-If you're debugging one, you can use [Brie](https://go.briehq.com/github?utm_source=CEB) lets you capture screenshots, errors, and network activity, making it easier for us to help.
-
-## Reference
-
-- [Chrome Extensions](https://developer.chrome.com/docs/extensions)
-- [Vite Plugin](https://vitejs.dev/guide/api-plugin.html)
-- [Rollup](https://rollupjs.org/guide/en/)
-- [Turborepo](https://turbo.build/repo/docs)
-- [Rollup-plugin-chrome-extension](https://www.extend-chrome.dev/rollup-plugin)
-
-## Star History <a name="star-history"></a>
-
-<a href="https://star-history.com/#Jonghakseo/chrome-extension-boilerplate-react-vite&Date">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Jonghakseo/chrome-extension-boilerplate-react-vite&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Jonghakseo/chrome-extension-boilerplate-react-vite&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Jonghakseo/chrome-extension-boilerplate-react-vite&type=Date" />
- </picture>
-</a>
-
-## Contributors <a name="contributors"></a>
-
-This Boilerplate is made possible thanks to all of its contributors.
-
-<a href="https://github.com/Jonghakseo/chrome-extension-boilerplate-react-vite/graphs/contributors">
-  <img width="500px" src="https://contrib.rocks/image?repo=Jonghakseo/chrome-extension-boilerplate-react-vite" alt="All Contributors"/>
-</a>
-
----
-
-## Special Thanks To
-
-| <a href="https://jb.gg/OpenSourceSupport"><img width="40" src="https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.png" alt="JetBrains Logo (Main) logo."></a> | <a href="https://www.linkedin.com/in/j-acks0n"><img width="40" style="border-radius:50%" src='https://avatars.githubusercontent.com/u/23139754' alt='Jackson Hong'/></a> |
-|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-
----
-
-Made by [Jonghakseo](https://jonghakseo.github.io/)
