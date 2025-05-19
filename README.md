@@ -96,12 +96,36 @@ pages/
 ## 3. 개발 환경 설정
 
 ### 설치 순서
+When you're using Windows run this:
+```bash
+git config --global core.eol lf
+git config --global core.autocrlf input
+```
+This will set the EOL (End of line) character to be the same as on Linux/macOS. Without this, our bash script won't work, and you will have conflicts with developers on Linux/macOS.
 
 ```bash
 git clone "https://github.com/snghnl/CKDP.git"
 cd CKDP
+```
+
+Ensure your node version is >= than in .nvmrc file, recommend to use nvm
+Install pnpm globally: npm install -g pnpm (ensure your node version >= 22.12.0)
+
+```bash
 pnpm install
 ```
+
+
+For Chrome:
+Run:
+Dev: pnpm dev (on Windows, you should run as administrator; see issue#456)
+Prod: pnpm build
+Open in browser - chrome://extensions
+Check - Developer mode
+Click - Load unpacked in the upper left corner
+Select the dist directory from the boilerplate project
+
+
 
 * `pnpm dev`: 개발 서버 실행
 * `pnpm build`: 배포용 빌드
