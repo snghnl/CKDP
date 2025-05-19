@@ -98,8 +98,8 @@ pages/
 ### 설치 순서
 
 ```bash
-git clone []
-cd []
+git clone "https://github.com/snghnl/CKDP.git"
+cd CKDP
 pnpm install
 ```
 
