@@ -110,3 +110,114 @@ type Citation = {
 - IEEE: Institute of Electrical and Electronics Engineers
 - Turabian: Turabian Style
 - Vancouver: Vancouver Style
+
+---
+
+## MockDataService 사용 가이드
+
+
+
+1. **임포트 방법**
+   ```typescript
+   // 전체 타입과 서비스 임포트
+   import { MockDataService, Image, Chart, Source } from '@extension/shared';
+   
+   // 또는 필요한 것만 선택적으로 임포트
+   import { MockDataService } from '@extension/shared';
+   import type { Image, Chart, Source } from '@extension/shared';
+   ```
+
+2. **타입 사용 예시**
+   ```typescript
+   // 타입을 사용한 함수 정의
+   async function displayChart(chart: Chart) {
+     // 차트 표시 로직
+   }
+   
+   // 타입을 사용한 변수 정의
+   const images: Image[] = await MockDataService.getImages();
+   ```
+
+### 기본 사용법
+
+MockDataService는 프론트엔드와 백엔드 개발을 위한 테스트 데이터를 제공합니다. 실제 API가 구현되기 전까지 개발 및 테스트에 사용할 수 있습니다.
+
+```typescript
+import { MockDataService } from '@extension/shared';
+
+// 모든 이미지 가져오기
+const images = await MockDataService.getImages();
+
+// 특정 ID의 차트 가져오기
+const chart = await MockDataService.getChartById('chart1');
+
+// 특정 인용 형식의 출처 가져오기
+const apaSources = await MockDataService.getSourcesByCitationFormat('APA');
+
+// 검색 기능 사용하기
+const searchResults = await MockDataService.search('sales');
+```
+
+### 제공되는 메서드
+
+#### 이미지 관련
+- `getImages()`: 모든 이미지 목록 조회
+- `getImageById(id: string)`: ID로 특정 이미지 조회
+
+#### 차트 관련
+- `getCharts()`: 모든 차트 목록 조회
+- `getChartById(id: string)`: ID로 특정 차트 조회
+- `getChartsByType(type: ChartType)`: 차트 타입별 조회
+
+#### 출처 관련
+- `getSources()`: 모든 출처 목록 조회
+- `getSourceById(id: string)`: ID로 특정 출처 조회
+- `getSourcesByCitationFormat(format: CitationFormat)`: 인용 형식별 출처 조회
+
+#### 검색
+- `search(query: string)`: 모든 데이터 타입에서 검색
+  ```typescript
+  const results = await MockDataService.search('sales');
+  console.log(results.images);    // 이미지 검색 결과
+  console.log(results.charts);    // 차트 검색 결과
+  console.log(results.sources);   // 출처 검색 결과
+  ```
+
+### 테스트 데이터
+
+현재 제공되는 테스트 데이터:
+
+#### 이미지
+- 월간 판매 차트 (Q1 2024)
+- 매출 성장 비교 차트
+
+#### 차트
+- Q1 판매 분석 (막대 차트)
+- 매출 성장 (선 그래프)
+
+#### 출처
+- Q1 2024 판매 보고서 (APA 형식)
+- 연간 매출 분석 (MLA 형식)
+
+### 주의사항
+
+1. 모든 API 호출은 네트워크 지연을 시뮬레이션하기 위해 약간의 지연이 있습니다.
+2. 이 서비스는 개발 및 테스트 목적으로만 사용해야 합니다.
+3. 실제 API가 구현되면 이 서비스를 실제 API 클라이언트로 교체해야 합니다.
+
+### 예시 코드
+
+```typescript
+// 차트 타입별 조회 예시
+const barCharts = await MockDataService.getChartsByType('bar');
+console.log('Bar Charts:', barCharts);
+
+// 특정 출처의 인용 정보 조회 예시
+const source = await MockDataService.getSourceById('src1');
+console.log('Citations:', source?.citations);
+
+// 복합 검색 예시
+const searchResults = await MockDataService.search('2024');
+const matchingCharts = searchResults.charts;
+const matchingSources = searchResults.sources;
+```
