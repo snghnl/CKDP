@@ -1,14 +1,15 @@
 import { createRoot } from 'react-dom/client';
-import '@src/index.css';
-import SidePanel from '@src/SidePanel';
+import '@src/index.css'; // Tailwind 등 포함된 스타일
+import ChartCustomizationType from '@src/features/chart-customization-type/ChartPreview';
 
 function init() {
   const appContainer = document.querySelector('#app-container');
   if (!appContainer) {
     throw new Error('Can not find #app-container');
   }
+
   const root = createRoot(appContainer);
-  root.render(<SidePanel />);
+  root.render(<ChartCustomizationType />);
 }
 
 init();
