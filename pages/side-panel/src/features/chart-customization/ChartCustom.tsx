@@ -3,17 +3,7 @@ import * as d3 from 'd3';
 import * as Plot from '@observablehq/plot';
 import html2canvas from 'html2canvas';
 import type { Chart } from '@extension/shared';
-import {
-  Tabs,
-  Tab,
-  Box,
-  ToggleButtonGroup,
-  ToggleButton,
-  Button,
-  FormControlLabel,
-  Switch,
-  TextField,
-} from '@mui/material';
+import { Tabs, Tab, Box, ToggleButtonGroup, ToggleButton, Button, FormControlLabel, Switch, TextField } from '@mui/material';
 import { VerticalAlignCenter, HorizontalRule, AddCircleOutline, DeleteOutline } from '@mui/icons-material';
 
 interface ChartCustomProps {
@@ -79,20 +69,20 @@ export const ChartCustom: React.FC<ChartCustomProps> = ({ chart, onChartUpdate }
 
     // Update gridInterval state only if value is valid 'auto' or a number
     if (value.toLowerCase() === 'auto' || value === '') {
-      setGridInterval('auto');
+        setGridInterval('auto');
     } else {
-      const num = Number(value);
-      if (!isNaN(num)) {
-        setGridInterval(num);
-      }
-      // If it's not 'auto' and not a valid number, gridInterval state is not updated,
-      // keeping the last valid value (auto or number).
+        const num = Number(value);
+        if (!isNaN(num)) {
+            setGridInterval(num);
+        } 
+        // If it's not 'auto' and not a valid number, gridInterval state is not updated, 
+        // keeping the last valid value (auto or number).
     }
   };
 
   // Sync gridIntervalInput with gridInterval state when gridInterval changes externally
   useEffect(() => {
-    setGridIntervalInput(gridInterval === 'auto' ? 'auto' : String(gridInterval));
+      setGridIntervalInput(gridInterval === 'auto' ? 'auto' : String(gridInterval));
   }, [gridInterval]);
 
   useEffect(() => {
@@ -101,10 +91,6 @@ export const ChartCustom: React.FC<ChartCustomProps> = ({ chart, onChartUpdate }
     // Update last non-table view
     if (view !== 'table') {
       setLastChartView(view);
-    } else if (lastChartView === null && view === 'table') {
-      // If we are in table view and no chart view was selected yet, default to bar
-      // This handles the initial load state where view is 'table' and lastChartView is null
-      setLastChartView('bar'); // Default to bar chart initially in table view
     }
 
     // 기존 차트 제거 (뷰 변경 시 항상 제거)
@@ -122,9 +108,8 @@ export const ChartCustom: React.FC<ChartCustomProps> = ({ chart, onChartUpdate }
     // Determine which chart to draw based on current view or last non-table view
     const chartViewToRender = view === 'table' ? lastChartView : view;
 
-    if (!chartViewToRender) {
-      // Don't render chart if no view selected (should not happen with initial default)
-      return;
+    if (!chartViewToRender) { // Don't render chart if no view selected
+        return;
     }
 
     let marks;
@@ -137,30 +122,28 @@ export const ChartCustom: React.FC<ChartCustomProps> = ({ chart, onChartUpdate }
       margin: 40,
     };
 
-    // Interval option to apply only to quantitative axes
-    const quantitativeIntervalOption = typeof gridInterval === 'number' ? { interval: gridInterval } : {};
+    // Apply grid interval if set and not 'auto', only to quantitative axes
+    const intervalOption = typeof gridInterval === 'number' ? { interval: gridInterval } : {};
 
     switch (chartViewToRender) {
       case 'bar':
-        const currentBarDirection =
-          view === 'table' && lastChartView === 'bar' ? barDirection : view === 'bar' ? barDirection : 'vertical';
+        const currentBarDirection = view === 'table' && lastChartView === 'bar' ? barDirection : (view === 'bar' ? barDirection : 'vertical');
         if (currentBarDirection === 'vertical') {
           marks = [Plot.barY(data, { x: headers[0], y: headers[1], fill: chart.colors.primary })];
           plotOptions = {
             ...plotOptions,
             marks,
             x: { label: headers[0] }, // x-axis is categorical for vertical bar chart, no interval here
-            y: { label: headers[1] + ' →', ...quantitativeIntervalOption }, // y-axis is quantitative, apply interval
+            y: { label: headers[1] + ' →', ...intervalOption }, // y-axis is quantitative, apply interval
           };
-        } else {
-          // horizontal bar chart
+        } else { // horizontal bar chart
           marks = [Plot.barX(data, { y: headers[0], x: headers[1], fill: chart.colors.primary })];
           plotOptions = {
             ...plotOptions,
             marks,
-            x: { label: headers[1] + ' →', ...quantitativeIntervalOption }, // x-axis is quantitative, apply interval
-            y: {
-              label: headers[0],
+            x: { label: headers[1] + ' →', ...intervalOption }, // x-axis is quantitative, apply interval
+            y: { 
+              label: headers[0], 
               domain: data.map(d => d[headers[0]]),
               labelOffset: 10,
               tickFormat: (d: any) => d,
@@ -175,61 +158,63 @@ export const ChartCustom: React.FC<ChartCustomProps> = ({ chart, onChartUpdate }
         break;
       case 'line':
         marks = [Plot.lineY(data, { x: headers[0], y: headers[1], stroke: chart.colors.primary })];
-        plotOptions = {
-          ...plotOptions,
-          marks,
-          x: { label: headers[0], ...quantitativeIntervalOption }, // Assuming x-axis is quantitative/temporal, apply interval
-          y: { label: headers[1] + ' →', ...quantitativeIntervalOption }, // Assuming y-axis is quantitative, apply interval
-        };
+         plotOptions = {
+            ...plotOptions,
+            marks,
+            x: { label: headers[0], ...intervalOption }, // Assuming x-axis is quantitative/temporal, apply interval
+            y: { label: headers[1] + ' →', ...intervalOption }, // Assuming y-axis is quantitative, apply interval
+          };
         break;
       case 'area':
         marks = [Plot.areaY(data, { x: headers[0], y: headers[1], fill: chart.colors.primary })];
-        plotOptions = {
-          ...plotOptions,
-          marks,
-          x: { label: headers[0], ...quantitativeIntervalOption }, // Assuming x-axis is quantitative/temporal, apply interval
-          y: { label: headers[1] + ' →', ...quantitativeIntervalOption }, // Assuming y-axis is quantitative, apply interval
-        };
+         plotOptions = {
+            ...plotOptions,
+            marks,
+            x: { label: headers[0], ...intervalOption }, // Assuming x-axis is quantitative/temporal, apply interval
+            y: { label: headers[1] + ' →', ...intervalOption }, // Assuming y-axis is quantitative, apply interval
+          };
         break;
       case 'pie':
         // D3.js 파이 차트 렌더링 (Plot.js와 별개)
         const width = chartRef.current.clientWidth;
         const height = chartRef.current.clientHeight;
-        const radius = (Math.min(width, height) / 2) * 0.8;
+        const radius = Math.min(width, height) / 2 * 0.8;
 
-        const svg = d3
-          .select(chartRef.current)
+        const svg = d3.select(chartRef.current)
           .append('svg')
           .attr('width', width)
           .attr('height', height)
           .append('g')
-          .attr('transform', `translate(${width / 2},${height / 2})`);
+          .attr('transform', `translate(${width/2},${height/2})`);
 
         const pieData = data.map(d => ({
           name: d[headers[0]],
-          value: Number(d[headers[1]]),
+          value: Number(d[headers[1]])
         }));
 
-        const pie = d3.pie<(typeof pieData)[0]>().value(d => d.value);
+        const pie = d3.pie<typeof pieData[0]>()
+          .value(d => d.value);
 
-        const arc = d3.arc<d3.PieArcDatum<(typeof pieData)[0]>>().innerRadius(0).outerRadius(radius);
+        const arc = d3.arc<d3.PieArcDatum<typeof pieData[0]>>()
+          .innerRadius(0)
+          .outerRadius(radius);
 
-        const arcs = svg.selectAll('arc').data(pie(pieData)).enter().append('g');
+        const arcs = svg.selectAll('arc')
+          .data(pie(pieData))
+          .enter()
+          .append('g');
 
-        arcs
-          .append('path')
+        arcs.append('path')
           .attr('d', arc)
           .attr('fill', chart.colors.primary)
           .attr('stroke', 'white')
           .style('stroke-width', '2px');
 
-        const labelArc = d3
-          .arc<d3.PieArcDatum<(typeof pieData)[0]>>()
+        const labelArc = d3.arc<d3.PieArcDatum<typeof pieData[0]>>()
           .innerRadius(radius * 0.6)
           .outerRadius(radius * 0.6);
 
-        arcs
-          .append('text')
+        arcs.append('text')
           .attr('transform', d => `translate(${labelArc.centroid(d)})`)
           .attr('text-anchor', 'middle')
           .text(d => d.data.name);
@@ -251,12 +236,12 @@ export const ChartCustom: React.FC<ChartCustomProps> = ({ chart, onChartUpdate }
     const newRows = [...tableData.rows];
     newRows[rowIndex] = [...newRows[rowIndex]];
     newRows[rowIndex][colIndex] = value;
-
+    
     const newTableData = {
       ...tableData,
       rows: newRows,
     };
-
+    
     setTableData(newTableData);
     onChartUpdate?.({
       ...chart,
@@ -266,7 +251,7 @@ export const ChartCustom: React.FC<ChartCustomProps> = ({ chart, onChartUpdate }
 
   const handleDownload = async () => {
     if (!chartRef.current) return;
-
+    
     try {
       const canvas = await html2canvas(chartRef.current);
       const link = document.createElement('a');
@@ -279,23 +264,29 @@ export const ChartCustom: React.FC<ChartCustomProps> = ({ chart, onChartUpdate }
   };
 
   // Calculate dynamic height for horizontal bar chart (still needed for container height)
-  const dynamicHeight =
-    (view === 'bar' && barDirection === 'horizontal') ||
-    (view === 'table' && lastChartView === 'bar' && barDirection === 'horizontal')
-      ? Math.max(tableData.rows.length * 30 + 100, 400)
-      : 400; // Default height
+  const dynamicHeight = (view === 'bar' && barDirection === 'horizontal') || (view === 'table' && lastChartView === 'bar' && barDirection === 'horizontal')
+    ? Math.max(tableData.rows.length * 30 + 100, 400)
+    : 400; // Default height
 
   return (
     <div className="p-4">
       <div className="mb-4 flex justify-between items-center">
         <h2 className="text-xl font-bold">{chart.name}</h2>
-        <button onClick={handleDownload} className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+        <button
+          onClick={handleDownload}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
           Download
         </button>
       </div>
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-        <Tabs value={view} onChange={(_, newValue) => setView(newValue)} variant="scrollable" scrollButtons="auto">
+        <Tabs 
+          value={view} 
+          onChange={(_, newValue) => setView(newValue)}
+          variant="scrollable"
+          scrollButtons="auto"
+        >
           <Tab label="테이블" value="table" />
           <Tab label="막대 차트" value="bar" />
           <Tab label="선 차트" value="line" />
@@ -306,10 +297,13 @@ export const ChartCustom: React.FC<ChartCustomProps> = ({ chart, onChartUpdate }
 
       {/* Table content - only shown in table view, placed above chart container */}
       {view === 'table' && (
-        <div className="overflow-x-auto mb-4">
-          {' '}
-          {/* Added mb-4 for spacing */}
-          <Button variant="outlined" startIcon={<AddCircleOutline />} onClick={handleAddRow} sx={{ mb: 2 }}>
+        <div className="overflow-x-auto mb-4"> {/* Added mb-4 for spacing */}
+          <Button 
+            variant="outlined" 
+            startIcon={<AddCircleOutline />} 
+            onClick={handleAddRow}
+            sx={{ mb: 2 }}
+          >
             행 추가
           </Button>
           <table className="min-w-full border">
@@ -331,13 +325,17 @@ export const ChartCustom: React.FC<ChartCustomProps> = ({ chart, onChartUpdate }
                       <input
                         type="text"
                         value={cell}
-                        onChange={e => handleCellEdit(rowIndex, colIndex, e.target.value)}
+                        onChange={(e) => handleCellEdit(rowIndex, colIndex, e.target.value)}
                         className="w-full p-1 border rounded"
                       />
                     </td>
                   ))}
                   <td className="border p-2 text-center">
-                    <DeleteOutline color="error" sx={{ cursor: 'pointer' }} onClick={() => handleDeleteRow(rowIndex)} />
+                    <DeleteOutline 
+                      color="error"
+                      sx={{ cursor: 'pointer' }} 
+                      onClick={() => handleDeleteRow(rowIndex)}
+                    />
                   </td>
                 </tr>
               ))}
@@ -346,14 +344,15 @@ export const ChartCustom: React.FC<ChartCustomProps> = ({ chart, onChartUpdate }
         </div>
       )}
 
-      {/* Bar direction toggle only shown in bar view or when last view was bar in table view */}
+       {/* Bar direction toggle only shown in bar view or when last view was bar in table view */}
       {(view === 'bar' || (view === 'table' && lastChartView === 'bar')) && (
         <Box sx={{ mb: 2 }}>
           <ToggleButtonGroup
             value={barDirection}
             exclusive
             onChange={(_, newDirection) => newDirection && setBarDirection(newDirection)}
-            aria-label="차트 방향">
+            aria-label="차트 방향"
+          >
             <ToggleButton value="vertical" aria-label="세로 막대">
               <VerticalAlignCenter />
             </ToggleButton>
@@ -367,7 +366,10 @@ export const ChartCustom: React.FC<ChartCustomProps> = ({ chart, onChartUpdate }
       {/* Grid control options (show/interval) - shown for chart views or table view when a chart was previously selected */}
       {(view !== 'table' || (view === 'table' && lastChartView !== null)) && (
         <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
-          <FormControlLabel control={<Switch checked={showGrid} onChange={handleShowGridChange} />} label="격자 표시" />
+          <FormControlLabel
+            control={<Switch checked={showGrid} onChange={handleShowGridChange} />}
+            label="격자 표시"
+          />
           <TextField
             label="격자 간격 (auto)"
             value={gridIntervalInput}
@@ -380,7 +382,11 @@ export const ChartCustom: React.FC<ChartCustomProps> = ({ chart, onChartUpdate }
 
       {/* Chart container - always rendered, placed below table content. 
           Chart inside is rendered based on current view or lastChartView. */}
-      <div ref={chartRef} className="w-full border rounded-lg p-4" style={{ height: `${dynamicHeight}px` }} />
+      <div
+        ref={chartRef}
+        className="w-full border rounded-lg p-4"
+        style={{ height: `${dynamicHeight}px` }}
+      />
     </div>
   );
 };
