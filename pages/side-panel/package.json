@@ -28,7 +28,9 @@
     "@extension/ui": "workspace:*",
     "@fontsource/roboto": "^5.2.5",
     "@mui/icons-material": "^7.1.0",
-    "@mui/material": "^7.1.0"
+    "@mui/material": "^7.1.0",
+    "d3": "^7.9.0",
+    "lucide-react": "^0.511.0"
   },
   "devDependencies": {
     "@extension/tailwindcss-config": "workspace:*",
