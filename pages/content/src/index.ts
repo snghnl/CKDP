@@ -8,3 +8,4 @@ console.log('content script loaded');
 
 // Run the extraction
 processImageTags(extractImageTagsFromPage());
+
