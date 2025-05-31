@@ -34,7 +34,7 @@ const mockImages: Image[] = [
   },
 ];
 
-const mockCharts: Chart[] = [
+export const mockCharts: Chart[] = [
   {
     id: 'chart1',
     name: 'Q1 Sales Analysis',

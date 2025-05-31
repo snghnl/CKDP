@@ -1,187 +1,392 @@
-import React, { useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Palette } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import * as d3 from 'd3';
+import * as Plot from '@observablehq/plot';
+import html2canvas from 'html2canvas';
+import type { Chart } from '@extension/shared';
+import { Tabs, Tab, Box, ToggleButtonGroup, ToggleButton, Button, FormControlLabel, Switch, TextField } from '@mui/material';
+import { VerticalAlignCenter, HorizontalRule, AddCircleOutline, DeleteOutline } from '@mui/icons-material';
 
-// sample data
-const sampleData = [
-  { name: '1월', sales: 4000, profit: 2400 },
-  { name: '2월', sales: 3000, profit: 1398 },
-  { name: '3월', sales: 2000, profit: 9800 },
-  { name: '4월', sales: 2780, profit: 3908 },
-  { name: '5월', sales: 1890, profit: 4800 },
-  { name: '6월', sales: 2390, profit: 3800 },
-];
-
-const predefinedColors = [
-  '#ef4444', // red
-  '#000000', // black
-  '#3b82f6', // blue
-  '#10b981', // green
-  '#f59e0b', // orangex
-  '#8b5cf6', // purple
-];
-
-// 타입 정의
-type ChartType = 'sales' | 'profit';
-
-interface ColorPickerProps {
-  type: ChartType;
-  currentColor: string;
-  onColorChange: (color: string) => void;
-  close: () => void;
+interface ChartCustomProps {
+  chart: Chart;
+  onChartUpdate?: (chart: Chart) => void;
 }
 
-const ColorPicker: React.FC<ColorPickerProps> = ({ type, currentColor, onColorChange, close }) => {
-  const [customColor, setCustomColor] = useState(currentColor);
+type ChartView = 'table' | 'bar' | 'line' | 'area' | 'pie';
+type BarDirection = 'vertical' | 'horizontal';
 
-  const handleCustomChange = (color: string) => {
-    setCustomColor(color);
-    onColorChange(color);
+export const ChartCustom: React.FC<ChartCustomProps> = ({ chart, onChartUpdate }) => {
+  const chartRef = useRef<HTMLDivElement>(null);
+  const [view, setView] = useState<ChartView>('table');
+  const [lastChartView, setLastChartView] = useState<Exclude<ChartView, 'table'> | null>(null); // Track last non-table view
+  const [barDirection, setBarDirection] = useState<BarDirection>(chart?.type === 'bar' ? 'vertical' : 'vertical'); // Default vertical for bar chart
+  const [tableData, setTableData] = useState(chart?.data ?? { headers: [], rows: [] });
+  const [showGrid, setShowGrid] = useState(chart?.showGrid ?? true); // Grid visibility state
+  const [gridInterval, setGridInterval] = useState<number | 'auto'>('auto'); // Grid interval state, default 'auto'
+  const [gridIntervalInput, setGridIntervalInput] = useState('auto'); // State for TextField input value
+
+  // Function to add a new row
+  const handleAddRow = () => {
+    const newRow = tableData.headers.map(() => ''); // Create a new row with empty values
+    const newTableData = {
+      ...tableData,
+      rows: [...tableData.rows, newRow],
+    };
+    setTableData(newTableData);
+    onChartUpdate?.({
+      ...chart,
+      data: newTableData,
+    });
   };
 
-  return (
-    <div className="absolute top-full mt-2 left-0 bg-white border border-gray-300 rounded-lg p-4 shadow-lg z-10 min-w-[250px]">
-      <div>
-        <label className="block text-sm font-medium mb-2">색상 선택</label>
-        <input
-          type="color"
-          value={customColor}
-          onChange={e => handleCustomChange(e.target.value)}
-          className="w-full h-10 rounded-md border border-gray-300 cursor-pointer"
-        />
-      </div>
-
-      <button
-        onClick={close}
-        className="mt-3 w-full px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-md text-sm transition-colors">
-        닫기
-      </button>
-    </div>
-  );
-};
-
-export function ChartCustom() {
-  const [salesColor, setSalesColor] = useState('#3b82f6');
-  const [profitColor, setProfitColor] = useState('#10b981');
-  const [showColorPicker, setShowColorPicker] = useState<{ [key in ChartType]: boolean }>({
-    sales: false,
-    profit: false,
-  });
-
-  const handleColorChange = (type: ChartType, color: string) => {
-    if (type === 'sales') setSalesColor(color);
-    else setProfitColor(color);
+  // Function to delete a row by index
+  const handleDeleteRow = (index: number) => {
+    const newRows = tableData.rows.filter((_, i) => i !== index);
+    const newTableData = {
+      ...tableData,
+      rows: newRows,
+    };
+    setTableData(newTableData);
+    onChartUpdate?.({
+      ...chart,
+      data: newTableData,
+    });
   };
 
+  // Handle grid visibility change
+  const handleShowGridChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = event.target.checked;
+    setShowGrid(checked);
+    onChartUpdate?.({
+      ...chart,
+      showGrid: checked,
+    });
+  };
+
+  // Handle grid interval input change
+  const handleGridIntervalInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setGridIntervalInput(value); // Always update input state
+
+    // Update gridInterval state only if value is valid 'auto' or a number
+    if (value.toLowerCase() === 'auto' || value === '') {
+        setGridInterval('auto');
+    } else {
+        const num = Number(value);
+        if (!isNaN(num)) {
+            setGridInterval(num);
+        } 
+        // If it's not 'auto' and not a valid number, gridInterval state is not updated, 
+        // keeping the last valid value (auto or number).
+    }
+  };
+
+  // Sync gridIntervalInput with gridInterval state when gridInterval changes externally
+  useEffect(() => {
+      setGridIntervalInput(gridInterval === 'auto' ? 'auto' : String(gridInterval));
+  }, [gridInterval]);
+
+  useEffect(() => {
+    if (!chartRef.current || !tableData) return;
+
+    // Update last non-table view
+    if (view !== 'table') {
+      setLastChartView(view);
+    }
+
+    // 기존 차트 제거 (뷰 변경 시 항상 제거)
+    d3.select(chartRef.current).selectAll('*').remove();
+
+    const { headers, rows } = tableData;
+    const data = rows.map(row => {
+      const obj: Record<string, any> = {};
+      headers.forEach((header, index) => {
+        obj[header] = row[index];
+      });
+      return obj;
+    });
+
+    // Determine which chart to draw based on current view or last non-table view
+    const chartViewToRender = view === 'table' ? lastChartView : view;
+
+    if (!chartViewToRender) { // Don't render chart if no view selected
+        return;
+    }
+
+    let marks;
+    let plotOptions: Plot.PlotOptions = {
+      marks,
+      color: {
+        legend: chart.showLegend,
+      },
+      grid: showGrid, // Use showGrid state
+      margin: 40,
+    };
+
+    // Apply grid interval if set and not 'auto', only to quantitative axes
+    const intervalOption = typeof gridInterval === 'number' ? { interval: gridInterval } : {};
+
+    switch (chartViewToRender) {
+      case 'bar':
+        const currentBarDirection = view === 'table' && lastChartView === 'bar' ? barDirection : (view === 'bar' ? barDirection : 'vertical');
+        if (currentBarDirection === 'vertical') {
+          marks = [Plot.barY(data, { x: headers[0], y: headers[1], fill: chart.colors.primary })];
+          plotOptions = {
+            ...plotOptions,
+            marks,
+            x: { label: headers[0] }, // x-axis is categorical for vertical bar chart, no interval here
+            y: { label: headers[1] + ' →', ...intervalOption }, // y-axis is quantitative, apply interval
+          };
+        } else { // horizontal bar chart
+          marks = [Plot.barX(data, { y: headers[0], x: headers[1], fill: chart.colors.primary })];
+          plotOptions = {
+            ...plotOptions,
+            marks,
+            x: { label: headers[1] + ' →', ...intervalOption }, // x-axis is quantitative, apply interval
+            y: { 
+              label: headers[0], 
+              domain: data.map(d => d[headers[0]]),
+              labelOffset: 10,
+              tickFormat: (d: any) => d,
+              tickSize: 0,
+              align: 0.5,
+              // y-axis is categorical for horizontal bar chart, no interval here
+            },
+            marginRight: 40,
+            marginLeft: Math.max(...data.map(d => String(d[headers[0]]).length)) * 10 + 60,
+          };
+        }
+        break;
+      case 'line':
+        marks = [Plot.lineY(data, { x: headers[0], y: headers[1], stroke: chart.colors.primary })];
+         plotOptions = {
+            ...plotOptions,
+            marks,
+            x: { label: headers[0], ...intervalOption }, // Assuming x-axis is quantitative/temporal, apply interval
+            y: { label: headers[1] + ' →', ...intervalOption }, // Assuming y-axis is quantitative, apply interval
+          };
+        break;
+      case 'area':
+        marks = [Plot.areaY(data, { x: headers[0], y: headers[1], fill: chart.colors.primary })];
+         plotOptions = {
+            ...plotOptions,
+            marks,
+            x: { label: headers[0], ...intervalOption }, // Assuming x-axis is quantitative/temporal, apply interval
+            y: { label: headers[1] + ' →', ...intervalOption }, // Assuming y-axis is quantitative, apply interval
+          };
+        break;
+      case 'pie':
+        // D3.js 파이 차트 렌더링 (Plot.js와 별개)
+        const width = chartRef.current.clientWidth;
+        const height = chartRef.current.clientHeight;
+        const radius = Math.min(width, height) / 2 * 0.8;
+
+        const svg = d3.select(chartRef.current)
+          .append('svg')
+          .attr('width', width)
+          .attr('height', height)
+          .append('g')
+          .attr('transform', `translate(${width/2},${height/2})`);
+
+        const pieData = data.map(d => ({
+          name: d[headers[0]],
+          value: Number(d[headers[1]])
+        }));
+
+        const pie = d3.pie<typeof pieData[0]>()
+          .value(d => d.value);
+
+        const arc = d3.arc<d3.PieArcDatum<typeof pieData[0]>>()
+          .innerRadius(0)
+          .outerRadius(radius);
+
+        const arcs = svg.selectAll('arc')
+          .data(pie(pieData))
+          .enter()
+          .append('g');
+
+        arcs.append('path')
+          .attr('d', arc)
+          .attr('fill', chart.colors.primary)
+          .attr('stroke', 'white')
+          .style('stroke-width', '2px');
+
+        const labelArc = d3.arc<d3.PieArcDatum<typeof pieData[0]>>()
+          .innerRadius(radius * 0.6)
+          .outerRadius(radius * 0.6);
+
+        arcs.append('text')
+          .attr('transform', d => `translate(${labelArc.centroid(d)})`)
+          .attr('text-anchor', 'middle')
+          .text(d => d.data.name);
+
+        return; // 파이 차트는 D3로 직접 처리하므로 Plot.js 렌더링 건너뛰기
+    }
+
+    // Plot.js 차트 렌더링
+    const chartPlot = Plot.plot(plotOptions);
+    chartRef.current.appendChild(chartPlot);
+
+    return () => {
+      // Cleanup function to remove the chart when dependencies change or component unmounts
+      d3.select(chartRef.current).selectAll('*').remove();
+    };
+  }, [chart, tableData, view, barDirection, lastChartView, showGrid, gridInterval]); // dependencies
+
+  const handleCellEdit = (rowIndex: number, colIndex: number, value: string) => {
+    const newRows = [...tableData.rows];
+    newRows[rowIndex] = [...newRows[rowIndex]];
+    newRows[rowIndex][colIndex] = value;
+    
+    const newTableData = {
+      ...tableData,
+      rows: newRows,
+    };
+    
+    setTableData(newTableData);
+    onChartUpdate?.({
+      ...chart,
+      data: newTableData,
+    });
+  };
+
+  const handleDownload = async () => {
+    if (!chartRef.current) return;
+    
+    try {
+      const canvas = await html2canvas(chartRef.current);
+      const link = document.createElement('a');
+      link.download = `${chart.name}.png`;
+      link.href = canvas.toDataURL();
+      link.click();
+    } catch (error) {
+      console.error('Error downloading chart:', error);
+    }
+  };
+
+  // Calculate dynamic height for horizontal bar chart (still needed for container height)
+  const dynamicHeight = (view === 'bar' && barDirection === 'horizontal') || (view === 'table' && lastChartView === 'bar' && barDirection === 'horizontal')
+    ? Math.max(tableData.rows.length * 30 + 100, 400)
+    : 400; // Default height
+
   return (
-    <div className="p-6 bg-white">
-      <h2 className="text-2xl font-bold mb-6">Chart Customization</h2>
-
-      {/* 색상 설정 영역 */}
-      <div className="mb-8 p-4 bg-gray-50 rounded-lg">
-        <h3 className="text-lg font-semibold mb-4">차트 색상 설정</h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {(['sales', 'profit'] as ChartType[]).map(type => {
-            const currentColor = type === 'sales' ? salesColor : profitColor;
-            return (
-              <div key={type}>
-                <label className="block text-sm font-medium mb-3 capitalize">{type} 색상</label>
-                <div className="flex items-center gap-3">
-                  <div className="flex gap-2">
-                    {predefinedColors.slice(type === 'sales' ? 0 : 3, type === 'sales' ? 3 : 6).map(color => (
-                      <button
-                        key={color}
-                        onClick={() => handleColorChange(type, color)}
-                        className="w-8 h-8 rounded-md border-2 hover:scale-110 transition-transform"
-                        style={{
-                          backgroundColor: color,
-                          borderColor: currentColor === color ? '#374151' : '#d1d5db',
-                        }}
-                        title={color}
-                      />
-                    ))}
-                  </div>
-
-                  <div className="relative">
-                    <button
-                      onClick={() =>
-                        setShowColorPicker(prev => ({
-                          ...prev,
-                          [type]: !prev[type],
-                        }))
-                      }
-                      className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
-                      <Palette size={16} />
-                      <span className="text-sm">팔레트</span>
-                    </button>
-
-                    {showColorPicker[type] && (
-                      <ColorPicker
-                        type={type}
-                        currentColor={currentColor}
-                        onColorChange={color => handleColorChange(type, color)}
-                        close={() =>
-                          setShowColorPicker(prev => ({
-                            ...prev,
-                            [type]: false,
-                          }))
-                        }
-                      />
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <span>현재:</span>
-                    <div className="w-6 h-6 rounded border" style={{ backgroundColor: currentColor }} />
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+    <div className="p-4">
+      <div className="mb-4 flex justify-between items-center">
+        <h2 className="text-xl font-bold">{chart.name}</h2>
+        <button
+          onClick={handleDownload}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Download
+        </button>
       </div>
 
-      {/* 차트 영역 */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
-        <h3 className="text-lg font-semibold mb-4">월별 매출 및 수익 현황</h3>
-        <ResponsiveContainer width="100%" height={400}>
-          <BarChart data={sampleData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Bar dataKey="sales" fill={salesColor} name="매출" />
-            <Bar dataKey="profit" fill={profitColor} name="수익" />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+        <Tabs 
+          value={view} 
+          onChange={(_, newValue) => setView(newValue)}
+          variant="scrollable"
+          scrollButtons="auto"
+        >
+          <Tab label="테이블" value="table" />
+          <Tab label="막대 차트" value="bar" />
+          <Tab label="선 차트" value="line" />
+          <Tab label="영역 차트" value="area" />
+          <Tab label="파이 차트" value="pie" />
+        </Tabs>
+      </Box>
 
-      {/* 테이블 영역 */}
-      <div className="mt-8">
-        <h3 className="text-lg font-semibold mb-4">원본 데이터</h3>
-        <div className="overflow-x-auto">
-          <table className="min-w-full border border-gray-300">
-            <thead className="bg-gray-50">
+      {/* Table content - only shown in table view, placed above chart container */}
+      {view === 'table' && (
+        <div className="overflow-x-auto mb-4"> {/* Added mb-4 for spacing */}
+          <Button 
+            variant="outlined" 
+            startIcon={<AddCircleOutline />} 
+            onClick={handleAddRow}
+            sx={{ mb: 2 }}
+          >
+            행 추가
+          </Button>
+          <table className="min-w-full border">
+            <thead>
               <tr>
-                <th className="px-4 py-2 border-b text-left">월</th>
-                <th className="px-4 py-2 border-b text-left">매출</th>
-                <th className="px-4 py-2 border-b text-left">수익</th>
+                {tableData.headers.map((header, index) => (
+                  <th key={index} className="border p-2 bg-gray-100">
+                    {header}
+                  </th>
+                ))}
+                <th className="border p-2 bg-gray-100"></th> {/* Empty header for delete button column */}
               </tr>
             </thead>
             <tbody>
-              {sampleData.map((row, index) => (
-                <tr key={index} className="hover:bg-gray-50">
-                  <td className="px-4 py-2 border-b">{row.name}</td>
-                  <td className="px-4 py-2 border-b">{row.sales.toLocaleString()}</td>
-                  <td className="px-4 py-2 border-b">{row.profit.toLocaleString()}</td>
+              {tableData.rows.map((row, rowIndex) => (
+                <tr key={rowIndex}>
+                  {row.map((cell, colIndex) => (
+                    <td key={colIndex} className="border p-2">
+                      <input
+                        type="text"
+                        value={cell}
+                        onChange={(e) => handleCellEdit(rowIndex, colIndex, e.target.value)}
+                        className="w-full p-1 border rounded"
+                      />
+                    </td>
+                  ))}
+                  <td className="border p-2 text-center">
+                    <DeleteOutline 
+                      color="error"
+                      sx={{ cursor: 'pointer' }} 
+                      onClick={() => handleDeleteRow(rowIndex)}
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </div>
+      )}
+
+       {/* Bar direction toggle only shown in bar view or when last view was bar in table view */}
+      {(view === 'bar' || (view === 'table' && lastChartView === 'bar')) && (
+        <Box sx={{ mb: 2 }}>
+          <ToggleButtonGroup
+            value={barDirection}
+            exclusive
+            onChange={(_, newDirection) => newDirection && setBarDirection(newDirection)}
+            aria-label="차트 방향"
+          >
+            <ToggleButton value="vertical" aria-label="세로 막대">
+              <VerticalAlignCenter />
+            </ToggleButton>
+            <ToggleButton value="horizontal" aria-label="가로 막대">
+              <HorizontalRule />
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
+      )}
+
+      {/* Grid control options (show/interval) - shown for chart views or table view when a chart was previously selected */}
+      {(view !== 'table' || (view === 'table' && lastChartView !== null)) && (
+        <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
+          <FormControlLabel
+            control={<Switch checked={showGrid} onChange={handleShowGridChange} />}
+            label="격자 표시"
+          />
+          <TextField
+            label="격자 간격 (auto)"
+            value={gridIntervalInput}
+            onChange={handleGridIntervalInputChange}
+            size="small"
+            sx={{ width: 120 }}
+          />
+        </Box>
+      )}
+
+      {/* Chart container - always rendered, placed below table content. 
+          Chart inside is rendered based on current view or lastChartView. */}
+      <div
+        ref={chartRef}
+        className="w-full border rounded-lg p-4"
+        style={{ height: `${dynamicHeight}px` }}
+      />
     </div>
   );
-}
+};
