@@ -1,14 +1,15 @@
 import '@src/SidePanel.css';
-import { useStorage, withErrorBoundary, withSuspense } from '@extension/shared';
-import { exampleThemeStorage } from '@extension/storage';
-import { ToggleButton } from '@extension/ui';
-import { t } from '@extension/i18n';
-import { Divider, Typography } from '@mui/material';
+import { withErrorBoundary, withSuspense } from '@extension/shared';
+import { Divider, Typography, Box } from '@mui/material';
 import { ChartCustom } from '@src/features/chart-customization/ChartCustom';
+import ChartColorCustom from '@src/features/chart-customization/ChartColorCustom';
 import { IndexingList } from '@src/features/chart-index/IndexingList';
 import { DataSource } from '@src/features/data-source/DataSource';
-import { useState } from 'react';
+import { AuthButton } from '@src/auth/AuthButton';
+import { useState, useEffect } from 'react';
 import type { Chart } from '@extension/shared';
+import { supabase } from '@src/lib/supabase';
+import type { Session, User } from '@supabase/supabase-js';
 
 const defaultChart: Chart = {
   id: 'default',
@@ -53,9 +54,34 @@ const defaultChart: Chart = {
 
 const SidePanel = () => {
   const [chart, setChart] = useState<Chart>(defaultChart);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    // Check active sessions and sets the user
+    supabase.auth.getSession().then(({ data: { session } }: { data: { session: Session | null } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Listen for changes on auth state
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   return (
     <div className="mt-4">
+      <div className="flex justify-end items-center gap-2">
+        {user && (
+          <Typography variant="body1" color="text.secondary">
+            {user.email}
+          </Typography>
+        )}
+        <AuthButton />
+      </div>
       <Typography variant="h1" sx={{ fontSize: '2rem', fontWeight: 'bold' }}>
         Indexing List
       </Typography>
@@ -65,6 +91,7 @@ const SidePanel = () => {
         Chart Customization
       </Typography>
       <ChartCustom chart={chart} onChartUpdate={setChart} />
+      <ChartColorCustom />
       <Divider />
       <Typography variant="h1" sx={{ fontSize: '2rem', fontWeight: 'bold' }}>
         Data Source
