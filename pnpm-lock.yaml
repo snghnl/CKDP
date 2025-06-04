@@ -453,6 +453,7 @@ importers:
       html2canvas:
         specifier: ^1.4.1
         version: 1.4.1
+
       lucide-react:
         specifier: ^0.511.0
         version: 0.511.0(react@19.0.0)
