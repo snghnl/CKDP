@@ -4,10 +4,12 @@ import ChartColorCustom from './features/chart-color-customization/ChartColorCus
 import '@src/index.css'; // Tailwind 등 포함된 스타일
 import { Divider } from '@mui/material';
 
+
 function App() {
   return (
     <>
       <ChartColorCustom />
+      <SidePanel />
     </>
   );
 }
