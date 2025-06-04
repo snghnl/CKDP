@@ -1,14 +1,9 @@
-import { createRoot } from 'react-dom/client';
-import '@src/index.css';
-import SidePanel from '@src/SidePanel';
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { ChartIndexPanel } from './features/chart-index/components/ChartIndexPanel';
 
-function init() {
-  const appContainer = document.querySelector('#app-container');
-  if (!appContainer) {
-    throw new Error('Can not find #app-container');
-  }
-  const root = createRoot(appContainer);
-  root.render(<SidePanel />);
-}
-
-init();
+ReactDOM.createRoot(document.getElementById('app-container')!).render(
+  <React.StrictMode>
+    <ChartIndexPanel />
+  </React.StrictMode>,
+);

@@ -9,8 +9,8 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 const rootDir = resolve(import.meta.dirname);
 const srcDir = resolve(rootDir, 'src');
-
 const outDir = resolve(rootDir, '..', 'dist');
+
 export default defineConfig({
   define: {
     'process.env': env,
@@ -33,12 +33,6 @@ export default defineConfig({
   ],
   publicDir: resolve(rootDir, 'public'),
   build: {
-    lib: {
-      name: 'BackgroundScript',
-      fileName: 'background',
-      formats: ['es'],
-      entry: resolve(srcDir, 'background', 'index.ts'),
-    },
     outDir,
     emptyOutDir: false,
     sourcemap: IS_DEV,
@@ -46,6 +40,21 @@ export default defineConfig({
     reportCompressedSize: IS_PROD,
     watch: watchOption,
     rollupOptions: {
+      input: {
+        background: resolve(srcDir, 'background', 'index.ts'),
+        chartDetector: resolve(rootDir, '..', 'pages/content/src/chart-detector.ts')
+      },
+      output: {
+        entryFileNames: (chunkInfo) => {
+          if (chunkInfo.name === 'chartDetector') {
+            return 'pages/content/src/chart-detector.js';
+          }
+          if (chunkInfo.name === 'background') {
+            return 'src/background/index.js'; // ✅ 수정된 경로
+          }
+          return 'src/[name].js';
+        },
+      },
       external: ['chrome'],
     },
   },
