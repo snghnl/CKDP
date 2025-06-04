@@ -1,9 +1,8 @@
 import '@src/SidePanel.css';
 import { withErrorBoundary, withSuspense } from '@extension/shared';
 import { Divider, Typography, Box } from '@mui/material';
-import { ChartCustom } from '@src/features/chart-customization/ChartCustom';
-import ChartColorCustom from '@src/features/chart-customization/ChartColorCustom';
 import { IndexingList } from '@src/features/chart-index/IndexingList';
+import ChartColorCustom from '@src/features/chart-color-customization/ChartColorCustom';
 import { DataSource } from '@src/features/data-source/DataSource';
 import { AuthButton } from '@src/auth/AuthButton';
 import { useState, useEffect } from 'react';
@@ -90,7 +89,6 @@ const SidePanel = () => {
       <Typography variant="h1" sx={{ fontSize: '2rem', fontWeight: 'bold' }}>
         Chart Customization
       </Typography>
-      <ChartCustom chart={chart} onChartUpdate={setChart} />
       <ChartColorCustom />
       <Divider />
       <Typography variant="h1" sx={{ fontSize: '2rem', fontWeight: 'bold' }}>
