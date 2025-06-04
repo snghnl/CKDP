@@ -1,10 +1,6 @@
-import { extractImageTagsFromPage, processImageTags } from '@src/extractImages';
+import { sampleFunction } from '@src/sampleFunction';
 
 console.log('content script loaded');
 
-// Expose functions to window object
-(window as any).extractImageTagsFromPage = extractImageTagsFromPage;
-(window as any).processImageTags = processImageTags;
-
-// Run the extraction
-processImageTags(extractImageTagsFromPage());
+// Shows how to call a function defined in another module
+sampleFunction();
