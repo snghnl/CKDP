@@ -1,6 +1,25 @@
-import React from 'react';
-import { Box, Button, Typography, Grid } from '@mui/material';
+import React, { useState } from 'react';
+import {
+  Box,
+  Button,
+  Typography,
+  Grid,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Collapse,
+  IconButton,
+} from '@mui/material';
 import FolderIcon from '@mui/icons-material/Folder';
+import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 
 interface SavedImage {
   id: string;
@@ -16,62 +35,142 @@ interface ImageGalleryProps {
   images: SavedImage[];
   currentDirectory: string;
   onDirectoryChange: (directory: string) => void;
+  onNewDirectory: (directory: string) => void;
 }
 
-export function ImageGallery({ images, currentDirectory, onDirectoryChange }: ImageGalleryProps) {
+export function ImageGallery({ images, currentDirectory, onDirectoryChange, onNewDirectory }: ImageGalleryProps) {
+  const [isNewDirectoryDialogOpen, setIsNewDirectoryDialogOpen] = useState(false);
+  const [newDirectoryName, setNewDirectoryName] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+
   const directories = Array.from(new Set(images.map(img => img.directory)));
   const filteredImages = images.filter(img => (currentDirectory ? img.directory === currentDirectory : true));
 
+  const handleNewDirectory = () => {
+    if (!newDirectoryName.trim()) {
+      setError('Directory name cannot be empty');
+      return;
+    }
+    if (directories.includes(newDirectoryName.trim())) {
+      setError('Directory already exists');
+      return;
+    }
+    onNewDirectory(newDirectoryName.trim());
+    setNewDirectoryName('');
+    setError(null);
+    setIsNewDirectoryDialogOpen(false);
+  };
+
   return (
     <Box sx={{ mt: 4 }}>
-      <Typography variant="h6" sx={{ mb: 2 }}>
-        Saved Images
-      </Typography>
-
-      {/* Directory Navigation */}
-      <Box sx={{ mb: 2 }}>
-        <Button variant="outlined" startIcon={<FolderIcon />} onClick={() => onDirectoryChange('')} sx={{ mr: 1 }}>
-          All
-        </Button>
-        {directories.map(dir => (
-          <Button
-            key={dir}
-            variant="outlined"
-            startIcon={<FolderIcon />}
-            onClick={() => onDirectoryChange(dir)}
-            sx={{ mr: 1 }}>
-            {dir}
-          </Button>
-        ))}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          cursor: 'pointer',
+          '&:hover': {
+            backgroundColor: 'rgba(0, 0, 0, 0.04)',
+          },
+          borderRadius: 1,
+          p: 1,
+        }}
+        onClick={() => setIsExpanded(!isExpanded)}>
+        <Typography variant="h6">Saved Images</Typography>
+        <IconButton size="small">{isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}</IconButton>
       </Box>
 
-      {/* Image Grid */}
-      <Grid container spacing={2}>
-        {filteredImages.map(image => (
-          <Grid key={image.id} size={{ xs: 12, sm: 6, md: 4 }}>
-            <Box
-              sx={{
-                border: '1px solid #ddd',
-                borderRadius: 1,
-                p: 1,
-                textAlign: 'center',
-              }}>
-              <img
-                src={image.src}
-                alt={image.alt}
-                style={{
-                  width: '100%',
-                  height: '150px',
-                  objectFit: 'contain',
-                }}
-              />
-              <Typography variant="caption" display="block">
-                {image.directory}
-              </Typography>
-            </Box>
-          </Grid>
-        ))}
-      </Grid>
+      <Collapse in={isExpanded}>
+        {/* Directory Navigation */}
+        <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center', mt: 2 }}>
+          <FormControl sx={{ minWidth: 200 }}>
+            <InputLabel>Directory</InputLabel>
+            <Select value={currentDirectory} label="Directory" onChange={e => onDirectoryChange(e.target.value)}>
+              <MenuItem value="">All</MenuItem>
+              {directories.map(dir => (
+                <MenuItem key={dir} value={dir}>
+                  {dir}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <Button
+            variant="outlined"
+            startIcon={<CreateNewFolderIcon />}
+            onClick={() => setIsNewDirectoryDialogOpen(true)}>
+            New Directory
+          </Button>
+        </Box>
+
+        {/* Image Grid */}
+        <Grid container spacing={2}>
+          {filteredImages.map(image => (
+            <Grid item xs={12} sm={6} md={4} key={image.id}>
+              <Box
+                sx={{
+                  border: '1px solid #ddd',
+                  borderRadius: 1,
+                  p: 1,
+                  textAlign: 'center',
+                }}>
+                <img
+                  src={image.src}
+                  alt={image.alt}
+                  style={{
+                    width: '100%',
+                    height: '150px',
+                    objectFit: 'contain',
+                  }}
+                />
+                <Typography variant="caption" display="block">
+                  {image.directory}
+                </Typography>
+              </Box>
+            </Grid>
+          ))}
+        </Grid>
+      </Collapse>
+
+      {/* New Directory Dialog */}
+      <Dialog
+        open={isNewDirectoryDialogOpen}
+        onClose={() => {
+          setIsNewDirectoryDialogOpen(false);
+          setError(null);
+          setNewDirectoryName('');
+        }}>
+        <DialogTitle>Create New Directory</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Directory Name"
+            fullWidth
+            value={newDirectoryName}
+            onChange={e => {
+              setNewDirectoryName(e.target.value);
+              setError(null);
+            }}
+            error={!!error}
+            helperText={error}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setIsNewDirectoryDialogOpen(false);
+              setError(null);
+              setNewDirectoryName('');
+            }}>
+            Cancel
+          </Button>
+          <Button onClick={handleNewDirectory} variant="contained">
+            Create
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

@@ -51,13 +51,26 @@ export function IndexingList() {
     }
   };
 
+  const handleNewDirectory = (directory: string) => {
+    setCurrentDirectory(directory);
+  };
+
+  const existingDirectories = Array.from(new Set(savedImages.map(img => img.directory)));
+
   return (
     <Box sx={{ p: 2 }}>
       <ImagePicker onImagePicked={setImageInfo} />
 
-      {imageInfo && <ImagePreview imageInfo={imageInfo} onSave={handleSaveImage} />}
+      {imageInfo && (
+        <ImagePreview imageInfo={imageInfo} onSave={handleSaveImage} existingDirectories={existingDirectories} />
+      )}
 
-      <ImageGallery images={savedImages} currentDirectory={currentDirectory} onDirectoryChange={setCurrentDirectory} />
+      <ImageGallery
+        images={savedImages}
+        currentDirectory={currentDirectory}
+        onDirectoryChange={setCurrentDirectory}
+        onNewDirectory={handleNewDirectory}
+      />
     </Box>
   );
 }
