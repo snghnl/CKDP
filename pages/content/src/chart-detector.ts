@@ -95,11 +95,15 @@ const onMouseUp = () => {
   if (image) {
     const chart = {
       id: generateId(),
-      name: getImageNameFromUrl(image.src),
+      name: image.alt || getImageNameFromUrl(image.src),
       imageUrl: image.src,
+      alt: image.alt || '',
+      title: image.title || '',
+      width: image.width,
+      height: image.height,
     };
 
-    saveToRecentSelections(chart); // ✅ 최근 선택 저장
+    saveToRecentSelections(chart);
     chrome.runtime.sendMessage({
       type: 'CHART_IMAGE_CLICKED',
       payload: chart,
@@ -117,3 +121,9 @@ const onMouseUp = () => {
 document.addEventListener('mousedown', onMouseDown);
 
 console.log('[Material Picker] ✅ content script loaded');
+
+console.log('[Material Picker] 커서 바꾸기 시도');
+document.body.style.cursor = 'crosshair';
+document.querySelectorAll('img').forEach(img => {
+  img.style.outline = '2px solid red';
+});

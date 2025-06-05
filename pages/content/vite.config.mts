@@ -16,10 +16,10 @@ export default withPageConfig({
   plugins: [IS_DEV && makeEntryPointPlugin()],
   build: {
     lib: {
-      name: 'ContentScript',
-      fileName: 'index',
+      name: 'ImageSelector',
+      fileName: 'image-selector',
       formats: ['iife'],
-      entry: resolve(srcDir, 'index.ts'),
+      entry: resolve(srcDir, 'image-selector.ts'),
     },
     outDir: resolve(rootDir, '..', '..', 'dist', 'content'),
   },

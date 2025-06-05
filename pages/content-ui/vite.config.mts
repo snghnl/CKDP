@@ -1,4 +1,6 @@
-import { resolve } from 'node:path';
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import { resolve } from 'path';
 import { makeEntryPointPlugin } from '@extension/hmr';
 import { withPageConfig } from '@extension/vite-config';
 import { IS_DEV } from '@extension/env';
@@ -6,21 +8,31 @@ import { IS_DEV } from '@extension/env';
 const rootDir = resolve(import.meta.dirname);
 const srcDir = resolve(rootDir, 'src');
 
-export default withPageConfig({
+export default defineConfig({
+  plugins: [react()],
+  build: {
+    outDir: '../../dist/content-ui',
+    emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'src/index.tsx'),
+      },
+      output: {
+        entryFileNames: 'index.iife.js',
+        format: 'iife',
+        name: 'contentUI',
+        globals: {
+          react: 'React',
+          'react-dom': 'ReactDOM'
+        },
+        inlineDynamicImports: true
+      },
+      external: ['react', 'react-dom']
+    }
+  },
   resolve: {
     alias: {
-      '@src': srcDir,
-    },
-  },
-  plugins: [IS_DEV && makeEntryPointPlugin()],
-  publicDir: resolve(rootDir, 'public'),
-  build: {
-    lib: {
-      name: 'contentUI',
-      fileName: 'index',
-      formats: ['iife'],
-      entry: resolve(srcDir, 'index.tsx'),
-    },
-    outDir: resolve(rootDir, '..', '..', 'dist', 'content-ui'),
-  },
+      '@src': resolve(__dirname, 'src')
+    }
+  }
 });

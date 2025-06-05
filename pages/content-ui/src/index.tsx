@@ -1,7 +1,15 @@
+// React와 ReactDOM을 전역 변수로 사용
+declare global {
+  interface Window {
+    React: any;
+    ReactDOM: any;
+  }
+}
+
+import React from 'react';
 import { createRoot } from 'react-dom/client';
-import App from '@src/App';
-// @ts-expect-error Because file doesn't exist before build
-import tailwindcssOutput from '../dist/tailwind-output.css?inline';
+import App from './App';
+import './tailwind-input.css';
 
 const root = document.createElement('div');
 root.id = 'chrome-extension-boilerplate-react-vite-content-view-root';
@@ -13,22 +21,17 @@ rootIntoShadow.id = 'shadow-root';
 
 const shadowRoot = root.attachShadow({ mode: 'open' });
 
-if (navigator.userAgent.includes('Firefox')) {
-  /**
-   * In the firefox environment, adoptedStyleSheets cannot be used due to the bug
-   * @url https://bugzilla.mozilla.org/show_bug.cgi?id=1770592
-   *
-   * Injecting styles into the document, this may cause style conflicts with the host page
-   */
-  const styleElement = document.createElement('style');
-  styleElement.innerHTML = tailwindcssOutput;
-  shadowRoot.appendChild(styleElement);
-} else {
-  /** Inject styles into shadow dom */
-  const globalStyleSheet = new CSSStyleSheet();
-  globalStyleSheet.replaceSync(tailwindcssOutput);
-  shadowRoot.adoptedStyleSheets = [globalStyleSheet];
-}
+// 스타일 요소 생성
+const styleElement = document.createElement('style');
+styleElement.textContent = `
+  :host {
+    all: initial;
+  }
+  #shadow-root {
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+`;
+shadowRoot.appendChild(styleElement);
 
 shadowRoot.appendChild(rootIntoShadow);
-createRoot(rootIntoShadow).render(<App />);
+createRoot(rootIntoShadow).render(React.createElement(App));

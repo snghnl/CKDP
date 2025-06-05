@@ -42,7 +42,8 @@ export default defineConfig({
     rollupOptions: {
       input: {
         background: resolve(srcDir, 'background', 'index.ts'),
-        chartDetector: resolve(rootDir, '..', 'pages/content/src/chart-detector.ts')
+        chartDetector: resolve(rootDir, '..', 'pages/content/src/chart-detector.ts'),
+        content: resolve(rootDir, '..', 'pages/content/src/index.ts')
       },
       output: {
         entryFileNames: (chunkInfo) => {
@@ -50,7 +51,10 @@ export default defineConfig({
             return 'pages/content/src/chart-detector.js';
           }
           if (chunkInfo.name === 'background') {
-            return 'src/background/index.js'; // ✅ 수정된 경로
+            return 'src/background/index.js';
+          }
+          if (chunkInfo.name === 'content') {
+            return 'content/index.iife.js';
           }
           return 'src/[name].js';
         },

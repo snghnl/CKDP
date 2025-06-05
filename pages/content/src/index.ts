@@ -1,6 +1,5 @@
-// import { sampleFunction } from '@src/sampleFunction';
+// chart-detector 초기화
+import './chart-detector';
 
-// console.log('content script loaded');
-
-// // Shows how to call a function defined in another module
-// sampleFunction();
+// 콘솔 로그로 초기화 확인
+console.log('content script loaded');

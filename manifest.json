@@ -30,11 +30,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["pages/content/index.js"]
-    },
-    {
-      "matches": ["<all_urls>"],
-      "js": ["pages/content/src/chart-detector.js"],
+      "js": ["pages/content/src/image-selector.js"],
       "run_at": "document_idle"
     }
   ],
@@ -43,5 +39,8 @@
       "resources": ["google-icon.svg", "icon-16.png", "icon-32.png", "icon-48.png", "icon-128.png"],
       "matches": ["<all_urls>"]
     }
-  ]
+  ],
+  "side_panel": {
+    "default_path": "side-panel.html"
+  }
 }
