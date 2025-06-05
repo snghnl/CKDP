@@ -6,7 +6,7 @@ import { t } from '@extension/i18n';
 import { Divider, Typography } from '@mui/material';
 import { ChartCustom } from '@src/features/chart-customization/ChartCustom';
 import { IndexingList } from '@src/features/chart-index/IndexingList';
-import { DataSource } from '@src/features/data-source/DataSource';
+import { DataSourcePanel } from '@src/features/data-source/components/DataSourcePanel';
 import { useState } from 'react';
 import type { Chart } from '@extension/shared';
 
@@ -69,7 +69,7 @@ const SidePanel = () => {
       <Typography variant="h1" sx={{ fontSize: '2rem', fontWeight: 'bold' }}>
         Data Source
       </Typography>
-      <DataSource />
+      <DataSourcePanel />
     </div>
   );
 };

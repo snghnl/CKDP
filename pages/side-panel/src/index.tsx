@@ -5,14 +5,21 @@ import ChartColorCustom from './features/chart-customization/ChartColorCustom';
 import '@src/index.css'; // Tailwind 등 포함된 스타일
 import ChartCustomizationType from '@src/features/chart-customization-type/ChartPreview';
 import { Divider } from '@mui/material';
+import { DataSourcePanel } from '@src/features/data-source/components/DataSourcePanel';
 
 function App() {
   return (
-    <>
-      <ChartCustom chart={mockCharts[0]} />
+    <div className="flex flex-col h-full">
+      <div className="flex-grow">
+        <ChartCustom chart={mockCharts[0]} />
+        <Divider />
+        <ChartColorCustom />
+      </div>
       <Divider />
-      <ChartColorCustom />
-    </>
+      <div className="mt-auto">
+        <DataSourcePanel />
+      </div>
+    </div>
   );
 }
 
