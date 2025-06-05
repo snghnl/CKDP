@@ -1,19 +1,20 @@
 import { useState } from 'react';
 import { ColorPickerProps } from '../types';
 
+// 부드러운 무지개 색상 (빨주노초 순서 반영 및 개선)
 const predefinedColors = [
-  '#4CAF50',
-  '#2196F3',
-  '#FF5722',
-  '#9C27B0',
-  '#FF9800',
-  '#607D8B',
-  '#e57373',
-  '#ffb74d',
-  '#fff176',
-  '#81c784',
-  '#64b5f6',
-  '#9575cd',
+  '#FF6347', // 빨강 (Tomato)
+  '#FF7F50', // 주황 (Coral)
+  '#FFD700', // 노랑 (Gold)
+  '#9ACD32', // 연두 (YellowGreen)
+  '#66CDAA', // 초록 (MediumAquamarine)
+  '#00CED1', // 청록 (DarkTurquoise)
+  '#4682B4', // 파랑 (SteelBlue)
+  '#8A2BE2', // 보라 (BlueViolet)
+  '#FF69B4', // 분홍 (HotPink)
+  '#E9967A', // 주황빛 갈색 (DarkSalmon)
+  '#ADFF2F', // 연두색 (GreenYellow)
+  '#1E90FF', // 파란색 (DodgerBlue)
 ];
 
 export const ColorPicker = ({
