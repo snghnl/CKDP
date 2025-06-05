@@ -5,9 +5,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'from_panel') {
     switch (message.action) {
       case 'activate-image-picker':
-        // Handle image tag extraction
-        console.log('Received request to extract image tags');
-        // Send response immediately since we're not doing async work
+        // Forward the message to the content script
+        chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+          if (tabs[0]?.id) {
+            chrome.tabs.sendMessage(tabs[0].id, { type: 'activate-image-picker' });
+          }
+        });
         sendResponse({ success: true });
         break;
       default:
