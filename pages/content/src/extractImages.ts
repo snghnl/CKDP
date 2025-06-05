@@ -1,31 +1,37 @@
-import { Image } from '@extension/shared';
+let imagePickerActive = false;
 
-export function extractImageTagsFromPage(): HTMLImageElement[] {
-  // Get all img elements from the body
-  const images = document.body.getElementsByTagName('img');
-  console.log(`found ${images.length} images`);
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'activate-image-picker') {
+    imagePickerActive = true;
+    document.body.style.cursor = 'crosshair';
+  }
+});
 
-  // Convert HTMLCollection to Array for easier manipulation
-  return Array.from(images);
-}
-export function processImageTags(images: HTMLImageElement[]): Image[] {
-  return images.map(img => ({
-    id: img.id,
-    url: img.src,
-    description: img.alt,
-    width: img.width,
-    height: img.height,
-    // DOM interaction properties
-    elementId: img.id,
-    elementPath: img.src,
-    pageUrl: window.location.href,
-    captureTimestamp: Date.now(),
-    // Position information for scrolling
-    boundingRect: {
-      top: img.offsetTop,
-      left: img.offsetLeft,
-      width: img.offsetWidth,
-      height: img.offsetHeight,
-    },
-  }));
-}
+document.addEventListener(
+  'click',
+  function handleClick(e) {
+    if (!imagePickerActive) return;
+
+    const target = e.target as HTMLImageElement;
+    if (target.tagName.toLowerCase() === 'img') {
+      const info = {
+        src: target.src,
+        alt: target.alt || '',
+        width: target.width,
+        height: target.height,
+      };
+
+      chrome.runtime.sendMessage({
+        type: 'image-picked',
+        payload: info,
+      });
+
+      // Cleanup
+      imagePickerActive = false;
+      document.body.style.cursor = 'auto';
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  },
+  true,
+);
