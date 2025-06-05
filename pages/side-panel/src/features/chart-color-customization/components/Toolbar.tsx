@@ -1,10 +1,11 @@
-import { Palette } from 'lucide-react';
+import { Palette, Bot } from 'lucide-react';
 import { ChartView, BarDirection, ShowColorPickerState } from '../types';
 import { ColorPicker } from './ColorPicker';
 import { TableChart, BarChart, ShowChart, PieChart, AreaChart } from '@mui/icons-material';
 import { IconButton, Tooltip, Paper } from '@mui/material';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
+import { useRef, useState } from 'react';
 
 // 부드러운 무지개 색상
 const predefinedColors = [
@@ -63,6 +64,49 @@ export const Toolbar = ({
   userCustomColors,
   onUpdateUserCustomColors,
 }: ToolbarProps) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleAutoStyle = async (file: File) => {
+    try {
+      setIsLoading(true);
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('https://ckdp-backend-1071583860130.europe-west1.run.app/pdf/extract-colors', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('API call failed');
+      }
+
+      const data = await response.json();
+
+      if (data.dominant_colors && Array.isArray(data.dominant_colors)) {
+        // Store the received colors in userCustomColors
+        onUpdateUserCustomColors(data.dominant_colors);
+
+        // Apply the colors to the chart
+        data.dominant_colors.forEach((color: string, index: number) => {
+          onColorChange(index, color);
+        });
+      }
+    } catch (error) {
+      console.error('Error in auto styling:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.type === 'application/pdf') {
+      handleAutoStyle(file);
+    }
+  };
+
   return (
     <Paper
       elevation={0}
@@ -154,6 +198,14 @@ export const Toolbar = ({
               className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-50 text-gray-600 hover:bg-gray-100 transition-all duration-200">
               <Palette size={16} />
               <span>커스텀</span>
+            </button>
+            <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".pdf" className="hidden" />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isLoading}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-50 text-gray-600 hover:bg-gray-100 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+              <Bot size={16} />
+              <span>{isLoading ? '처리 중...' : '자동 스타일링'}</span>
             </button>
           </div>
         </div>
