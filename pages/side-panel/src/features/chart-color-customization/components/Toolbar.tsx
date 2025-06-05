@@ -1,9 +1,17 @@
 import { Palette } from 'lucide-react';
 import { ChartView, BarDirection, ShowColorPickerState } from '../types';
 import { ColorPicker } from './ColorPicker';
+import { TableChart, BarChart, ShowChart, PieChart, AreaChart } from '@mui/icons-material';
+import { IconButton, Tooltip, Paper } from '@mui/material';
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
+import SwapVertIcon from '@mui/icons-material/SwapVert';
 
 // 부드러운 무지개 색상
 const predefinedColors = [
+  '#FF6347', // Tomato (빨)
+  '#FF8C00', // DarkOrange (주)
+  '#FFD700', // Gold (노)
+  '#32CD32', // LimeGreen (초)
   '#4CAF50',
   '#2196F3',
   '#FF5722',
@@ -30,8 +38,8 @@ interface ToolbarProps {
   onGridIntervalInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   colors: string[];
   requiredColorCount: number;
-  showColorPicker: ShowColorPickerState;
-  onToggleColorPicker: (colorIndex: number) => void;
+  showColorPicker: boolean;
+  onToggleColorPicker: (show: boolean) => void;
   onColorChange: (colorIndex: number, color: string) => void;
   userCustomColors: string[];
   onUpdateUserCustomColors: (colors: string[]) => void;
@@ -56,26 +64,32 @@ export const Toolbar = ({
   onUpdateUserCustomColors,
 }: ToolbarProps) => {
   return (
-    <>
+    <Paper
+      elevation={0}
+      className="mb-4 p-4 bg-white rounded-xl border border-gray-100"
+      sx={{
+        boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+        transition: 'all 0.3s ease',
+      }}>
       {/* 탭 메뉴 */}
-      <div className="border-b border-gray-200 mb-4">
+      <div className="border-b border-gray-100 mb-4">
         <nav className="-mb-px flex space-x-8">
           {[
-            { key: 'table' as ChartView, label: '테이블' },
-            { key: 'bar' as ChartView, label: '막대 차트' },
-            { key: 'line' as ChartView, label: '선 차트' },
-            { key: 'area' as ChartView, label: '영역 차트' },
-            { key: 'pie' as ChartView, label: '원형 차트' },
+            { key: 'table' as ChartView, icon: <TableChart /> },
+            { key: 'bar' as ChartView, icon: <BarChart /> },
+            { key: 'line' as ChartView, icon: <ShowChart /> },
+            { key: 'area' as ChartView, icon: <AreaChart /> },
+            { key: 'pie' as ChartView, icon: <PieChart /> },
           ].map(tab => (
             <button
               key={tab.key}
               onClick={() => onViewChange(tab.key)}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center justify-center transition-all duration-200 ${
                 view === tab.key
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}>
-              {tab.label}
+              {tab.icon}
             </button>
           ))}
         </nav>
@@ -83,87 +97,80 @@ export const Toolbar = ({
 
       {/* 차트 옵션 */}
       {view !== 'table' && (
-        <div className="mb-4 flex flex-wrap gap-4 items-center p-4 bg-gray-50 rounded-lg">
+        <div className="flex flex-wrap gap-6 items-center">
           {/* 막대 차트 방향 설정 */}
           {view === 'bar' && (
             <div className="flex items-center gap-2">
-              <label className="text-sm font-medium">방향:</label>
+              <label className="text-sm font-medium text-gray-600">방향:</label>
+              <Tooltip title={barDirection === 'vertical' ? '가로 방향으로 변경' : '세로 방향으로 변경'}>
+                <IconButton
+                  size="small"
+                  onClick={() => onBarDirectionChange(barDirection === 'vertical' ? 'horizontal' : 'vertical')}
+                  sx={{
+                    bgcolor: 'background.paper',
+                    '&:hover': { bgcolor: 'action.hover' },
+                    transition: 'all 0.2s ease',
+                  }}>
+                  {barDirection === 'vertical' ? <SwapHorizIcon /> : <SwapVertIcon />}
+                </IconButton>
+              </Tooltip>
+            </div>
+          )}
+
+          {/* 그리드 표시 설정 */}
+          {view !== 'pie' && (
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-600">그리드:</label>
               <button
-                className={`px-3 py-1 rounded ${
-                  barDirection === 'vertical' ? 'bg-blue-600 text-white' : 'bg-gray-200'
-                }`}
-                onClick={() => onBarDirectionChange('vertical')}>
-                세로
-              </button>
-              <button
-                className={`ml-2 px-3 py-1 rounded ${
-                  barDirection === 'horizontal' ? 'bg-blue-600 text-white' : 'bg-gray-200'
-                }`}
-                onClick={() => onBarDirectionChange('horizontal')}>
-                가로
+                onClick={() => onShowGridChange(!showGrid)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  showGrid ? 'bg-blue-50 text-blue-600 hover:bg-blue-100' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                }`}>
+                {showGrid ? '표시' : '숨김'}
               </button>
             </div>
           )}
 
-          {/* 그리드 표시 */}
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="showGrid"
-              checked={showGrid}
-              onChange={e => onShowGridChange(e.target.checked)}
-              className="rounded"
-            />
-            <label htmlFor="showGrid" className="text-sm font-medium">
-              그리드 표시
-            </label>
-          </div>
-
           {/* 그리드 간격 설정 */}
-          {showGrid && (view === 'bar' || view === 'line' || view === 'area') && (
+          {view !== 'pie' && showGrid && (
             <div className="flex items-center gap-2">
-              <label className="text-sm font-medium">그리드 간격:</label>
+              <label className="text-sm font-medium text-gray-600">간격:</label>
               <input
-                type="text"
-                value={gridIntervalInput}
-                onChange={onGridIntervalInputChange}
-                placeholder="auto"
-                className="px-2 py-1 border border-gray-300 rounded text-sm w-20"
+                type="number"
+                value={gridIntervalInput === 'auto' ? '' : gridIntervalInput}
+                onChange={e => onGridIntervalInputChange(e)}
+                className="w-20 px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                min="1"
+                max="100"
               />
-              <span className="text-xs text-gray-500">(auto 또는 숫자)</span>
             </div>
           )}
 
           {/* 색상 설정 */}
-          <div className="flex items-center gap-2 relative">
-            <span className="text-sm font-medium">색상:</span>
-            <div className="flex gap-2">
-              {Array.from({ length: requiredColorCount }, (_, index) => {
-                const color = colors[index] || predefinedColors[index % predefinedColors.length];
-                return (
-                  <div key={index} className="relative">
-                    <button
-                      onClick={() => onToggleColorPicker(index)}
-                      className="w-8 h-8 rounded-md border-2 border-gray-300 hover:border-gray-400 transition-colors flex items-center justify-center"
-                      style={{ backgroundColor: color }}>
-                      <Palette size={12} className="text-white drop-shadow-sm" />
-                    </button>
-                    {showColorPicker[index] && (
-                      <ColorPicker
-                        colorIndex={index}
-                        currentColor={color}
-                        onColorChange={onColorChange}
-                        onClose={() => onToggleColorPicker(index)}
-                        userCustomColors={userCustomColors}
-                      />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-600">색상:</label>
+            <button
+              onClick={() => onToggleColorPicker(!showColorPicker)}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-50 text-gray-600 hover:bg-gray-100 transition-all duration-200">
+              <Palette size={16} />
+              <span>커스텀</span>
+            </button>
           </div>
         </div>
       )}
-    </>
+
+      {/* 색상 선택기 */}
+      {showColorPicker && (
+        <div className="mt-4 pt-4 border-t border-gray-100">
+          <ColorPicker
+            colorIndex={0}
+            currentColor={colors[0] || '#000000'}
+            onColorChange={onColorChange}
+            onClose={() => onToggleColorPicker(false)}
+            userCustomColors={userCustomColors}
+          />
+        </div>
+      )}
+    </Paper>
   );
 };

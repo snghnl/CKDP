@@ -1,23 +1,21 @@
 //ChartViewer.tsx
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import * as d3 from 'd3';
 import { ChartData, ChartView, BarDirection } from '../types';
 
 // 부드러운 무지개 색상
 const predefinedColors = [
-  '#4CAF50',
-  '#2196F3',
-  '#FF5722',
-  '#9C27B0',
-  '#FF9800',
-  '#607D8B',
-  '#e57373',
-  '#ffb74d',
-  '#fff176',
-  '#81c784',
-  '#64b5f6',
-  '#9575cd',
+  '#FF6B6B', // 산호색
+  '#4ECDC4', // 민트
+  '#45B7D1', // 하늘색
+  '#96CEB4', // 세이지
+  '#FFEEAD', // 크림
+  '#D4A5A5', // 로즈
+  '#9B59B6', // 라벤더
+  '#3498DB', // 블루
+  '#E67E22', // 오렌지
+  '#2ECC71', // 그린
 ];
 
 interface ChartViewerProps {
@@ -27,14 +25,34 @@ interface ChartViewerProps {
   showGrid: boolean;
   colors: string[];
   gridInterval: number | 'auto';
+  onBarDirectionChange?: (direction: BarDirection) => void;
+  onChartContainerReady?: (element: HTMLDivElement | null) => void;
 }
 
-export const ChartViewer = ({ tableData, view, barDirection, showGrid, colors, gridInterval }: ChartViewerProps) => {
+export const ChartViewer = ({
+  tableData,
+  view,
+  barDirection,
+  showGrid,
+  colors,
+  gridInterval,
+  onBarDirectionChange,
+  onChartContainerReady,
+}: ChartViewerProps) => {
   const chartRef = useRef<HTMLDivElement>(null);
 
-  // Enhanced chart rendering using D3 with horizontal bar support
-  useEffect(() => {
-    if (!chartRef.current || !tableData.headers.length || view === 'table') return;
+  const drawChart = useCallback(() => {
+    // 디버깅을 위해 데이터 및 view 상태 로그 추가
+    console.log('drawChart called', { tableData, view, barDirection, showGrid, colors, gridInterval });
+    console.log('chartRef.current:', chartRef.current);
+
+    if (!chartRef.current || !tableData?.headers?.length || view === 'table') {
+      console.log('drawChart condition not met, returning.');
+      if (!chartRef.current) console.log('Reason: chartRef.current is null');
+      if (!tableData?.headers?.length) console.log('Reason: tableData or headers empty');
+      if (view === 'table') console.log('Reason: view is table');
+      return;
+    }
 
     d3.select(chartRef.current).selectAll('*').remove();
 
@@ -43,7 +61,7 @@ export const ChartViewer = ({ tableData, view, barDirection, showGrid, colors, g
       const obj: Record<string, any> = {};
       headers.forEach((header, index) => {
         if (index === 0) {
-          obj[header] = row[index];
+          obj[header] = row[index] || '';
         } else {
           const value = row[index];
           obj[header] = value && !isNaN(Number(value)) ? Number(value) : 0;
@@ -51,6 +69,8 @@ export const ChartViewer = ({ tableData, view, barDirection, showGrid, colors, g
       });
       return obj;
     });
+
+    if (!data.length) return;
 
     const width = chartRef.current.clientWidth - 80;
     const height = chartRef.current.clientHeight - 80;
@@ -170,7 +190,7 @@ export const ChartViewer = ({ tableData, view, barDirection, showGrid, colors, g
 
       // 막대 그리기
       if (barDirection === 'horizontal') {
-        const barHeight = y.bandwidth() / headers.slice(1).length;
+        const barWidth = y.bandwidth() / headers.slice(1).length;
         headers.slice(1).forEach((header, index) => {
           const barGroup = svg
             .selectAll(`.bar-group-${index}`)
@@ -178,27 +198,45 @@ export const ChartViewer = ({ tableData, view, barDirection, showGrid, colors, g
             .enter()
             .append('g')
             .attr('class', `bar-group-${index}`)
-            .attr('transform', d => `translate(0, ${(y(d[headers[0]]) || 0) + index * barHeight})`);
+            .attr('transform', d => `translate(0, ${(y(d[headers[0]]) || 0) + index * barWidth})`);
 
           barGroup
             .append('rect')
             .attr('width', d => x(d[header]))
-            .attr('height', barHeight)
+            .attr('height', barWidth)
             .attr('x', 0)
             .attr('y', 0)
             .attr('fill', colors[index] || predefinedColors[index % predefinedColors.length])
-            .attr('rx', 4);
+            .attr('rx', 4)
+            .attr('ry', 4)
+            .style('transition', 'all 0.3s ease')
+            .on('mouseover', function (event, d) {
+              d3.select(this).transition().duration(200).attr('opacity', 0.8).attr('filter', 'brightness(1.1)');
 
-          // 값 레이블
-          barGroup
-            .append('text')
-            .attr('x', d => x(d[header]) + 5)
-            .attr('y', barHeight / 2)
-            .attr('text-anchor', 'start')
-            .attr('dominant-baseline', 'middle')
-            .style('fill', '#333333')
-            .style('font-size', '12px')
-            .text(d => d[header]);
+              const tooltip = d3
+                .select('body')
+                .append('div')
+                .attr('class', 'tooltip')
+                .style('position', 'absolute')
+                .style('background', 'rgba(0, 0, 0, 0.8)')
+                .style('color', 'white')
+                .style('padding', '8px 12px')
+                .style('border-radius', '6px')
+                .style('font-size', '12px')
+                .style('pointer-events', 'none')
+                .style('z-index', '1000')
+                .style('box-shadow', '0 2px 4px rgba(0,0,0,0.2)')
+                .style('backdrop-filter', 'blur(4px)');
+
+              tooltip
+                .html(`${d[headers[0]]}<br/>${header}: ${d[header]}`)
+                .style('left', `${event.pageX + 10}px`)
+                .style('top', `${event.pageY - 10}px`);
+            })
+            .on('mouseout', function () {
+              d3.select(this).transition().duration(200).attr('opacity', 1).attr('filter', 'none');
+              d3.selectAll('.tooltip').remove();
+            });
         });
       } else {
         // 세로 막대 (기존 코드)
@@ -214,7 +252,37 @@ export const ChartViewer = ({ tableData, view, barDirection, showGrid, colors, g
             .attr('width', barWidth)
             .attr('y', d => y(d[header]))
             .attr('height', d => height - y(d[header]))
-            .attr('fill', colors[index] || predefinedColors[index % predefinedColors.length]);
+            .attr('fill', colors[index] || predefinedColors[index % predefinedColors.length])
+            .attr('rx', 4)
+            .attr('ry', 4)
+            .style('transition', 'all 0.3s ease')
+            .on('mouseover', function (event, d) {
+              d3.select(this).transition().duration(200).attr('opacity', 0.8).attr('filter', 'brightness(1.1)');
+
+              const tooltip = d3
+                .select('body')
+                .append('div')
+                .attr('class', 'tooltip')
+                .style('position', 'absolute')
+                .style('background', 'rgba(0, 0, 0, 0.8)')
+                .style('color', 'white')
+                .style('padding', '8px 12px')
+                .style('border-radius', '6px')
+                .style('font-size', '12px')
+                .style('pointer-events', 'none')
+                .style('z-index', '1000')
+                .style('box-shadow', '0 2px 4px rgba(0,0,0,0.2)')
+                .style('backdrop-filter', 'blur(4px)');
+
+              tooltip
+                .html(`${d[headers[0]]}<br/>${header}: ${d[header]}`)
+                .style('left', `${event.pageX + 10}px`)
+                .style('top', `${event.pageY - 10}px`);
+            })
+            .on('mouseout', function () {
+              d3.select(this).transition().duration(200).attr('opacity', 1).attr('filter', 'none');
+              d3.selectAll('.tooltip').remove();
+            });
         });
       }
     } else if (view === 'line' || view === 'area') {
@@ -349,6 +417,31 @@ export const ChartViewer = ({ tableData, view, barDirection, showGrid, colors, g
     }
   }, [tableData, view, barDirection, showGrid, colors, gridInterval]);
 
+  useEffect(() => {
+    console.log('useEffect triggered');
+    drawChart();
+
+    const resizeObserver = new ResizeObserver(() => {
+      console.log('ResizeObserver triggered');
+      drawChart();
+    });
+
+    if (chartRef.current) {
+      console.log('Observing chartRef.current');
+      resizeObserver.observe(chartRef.current);
+
+      // chartRef.current가 설정되었을 때 콜백 호출
+      if (onChartContainerReady) {
+        onChartContainerReady(chartRef.current);
+      }
+    }
+
+    return () => {
+      console.log('useEffect cleanup: disconnecting ResizeObserver');
+      resizeObserver.disconnect();
+    };
+  }, [drawChart, chartRef, onChartContainerReady]);
+
   if (view === 'table') {
     return (
       <div className="overflow-x-auto">
@@ -379,10 +472,8 @@ export const ChartViewer = ({ tableData, view, barDirection, showGrid, colors, g
   }
 
   return (
-    <div
-      ref={chartRef}
-      className="w-full h-96 bg-white rounded border border-gray-200"
-      style={{ minHeight: '400px' }}
-    />
+    <div className="relative w-full h-96" style={{ minHeight: '400px' }}>
+      <div ref={chartRef} className="w-full h-full" />
+    </div>
   );
 };
