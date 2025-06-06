@@ -59,7 +59,9 @@ export function ImageGallery({
       setError('Directory already exists');
       return;
     }
-    onNewDirectory(newDirectoryName.trim());
+    const newDirectory = newDirectoryName.trim();
+    onNewDirectory(newDirectory);
+    onDirectoryChange(newDirectory);
     setNewDirectoryName('');
     setError(null);
     setIsNewDirectoryDialogOpen(false);
@@ -214,7 +216,7 @@ export function ImageGallery({
         {/* Image Grid */}
         <Grid container spacing={2}>
           {filteredImages.map(image => (
-            <Grid xs={12} sm={6} md={4} key={image.id}>
+            <Grid item xs={12} sm={6} md={4} key={image.id}>
               <Box
                 sx={{
                   border: '1px solid #ddd',

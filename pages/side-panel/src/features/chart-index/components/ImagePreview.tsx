@@ -51,7 +51,9 @@ export function ImagePreview({ imageInfo, onSave, existingDirectories }: ImagePr
       setError('Directory already exists');
       return;
     }
-    setDirectory(newDirectoryName.trim());
+    const newDirectory = newDirectoryName.trim();
+    setDirectory(newDirectory);
+    onSave(newDirectory);
     setNewDirectoryName('');
     setError(null);
     setIsNewDirectoryDialogOpen(false);

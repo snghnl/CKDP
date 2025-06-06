@@ -48,8 +48,16 @@ export function IndexingList({
     }
   };
 
-  const handleNewDirectory = (directory: string) => {
-    setCurrentDirectory(directory);
+  const handleNewDirectory = async (directory: string) => {
+    try {
+      // Update the current directory
+      setCurrentDirectory(directory);
+
+      // Reload saved images to ensure we have the latest data
+      await loadSavedImages();
+    } catch (error) {
+      console.error('Error handling new directory:', error);
+    }
   };
 
   const existingDirectories = Array.from(new Set(savedImages.map(img => img.directory)));
