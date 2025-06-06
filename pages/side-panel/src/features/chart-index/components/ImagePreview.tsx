@@ -12,6 +12,8 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
@@ -27,6 +29,8 @@ export function ImagePreview({ imageInfo, onSave, existingDirectories }: ImagePr
   const [error, setError] = useState<string | null>(null);
   const [isNewDirectoryDialogOpen, setIsNewDirectoryDialogOpen] = useState(false);
   const [newDirectoryName, setNewDirectoryName] = useState('');
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const handleSave = () => {
     if (!directory) {
@@ -69,8 +73,20 @@ export function ImagePreview({ imageInfo, onSave, existingDirectories }: ImagePr
           }}
         />
       </Box>
-      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mb: 2 }}>
-        <FormControl sx={{ minWidth: 200 }} error={!!error}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: 1,
+          alignItems: { xs: 'stretch', sm: 'center' },
+          mb: 2,
+        }}>
+        <FormControl
+          sx={{
+            minWidth: { xs: '100%', sm: 200 },
+            width: { xs: '100%', sm: 'auto' },
+          }}
+          error={!!error}>
           <InputLabel>Directory</InputLabel>
           <Select
             value={directory}
@@ -78,7 +94,8 @@ export function ImagePreview({ imageInfo, onSave, existingDirectories }: ImagePr
             onChange={e => {
               setDirectory(e.target.value);
               setError(null);
-            }}>
+            }}
+            size="small">
             {existingDirectories.map(dir => (
               <MenuItem key={dir} value={dir}>
                 {dir}
@@ -90,11 +107,24 @@ export function ImagePreview({ imageInfo, onSave, existingDirectories }: ImagePr
         <Button
           variant="outlined"
           startIcon={<CreateNewFolderIcon />}
-          onClick={() => setIsNewDirectoryDialogOpen(true)}>
+          onClick={() => setIsNewDirectoryDialogOpen(true)}
+          size="small"
+          sx={{
+            whiteSpace: 'nowrap',
+            minWidth: { xs: '100%', sm: 'auto' },
+          }}>
           New Directory
         </Button>
 
-        <Button variant="contained" onClick={handleSave} startIcon={<SaveIcon />}>
+        <Button
+          variant="contained"
+          onClick={handleSave}
+          startIcon={<SaveIcon />}
+          size="small"
+          sx={{
+            whiteSpace: 'nowrap',
+            minWidth: { xs: '100%', sm: 'auto' },
+          }}>
           Save
         </Button>
       </Box>
@@ -112,7 +142,9 @@ export function ImagePreview({ imageInfo, onSave, existingDirectories }: ImagePr
           setIsNewDirectoryDialogOpen(false);
           setError(null);
           setNewDirectoryName('');
-        }}>
+        }}
+        fullWidth
+        maxWidth="xs">
         <DialogTitle>Create New Directory</DialogTitle>
         <DialogContent>
           <TextField
@@ -127,6 +159,7 @@ export function ImagePreview({ imageInfo, onSave, existingDirectories }: ImagePr
             }}
             error={!!error}
             helperText={error}
+            size="small"
           />
         </DialogContent>
         <DialogActions>
@@ -135,10 +168,11 @@ export function ImagePreview({ imageInfo, onSave, existingDirectories }: ImagePr
               setIsNewDirectoryDialogOpen(false);
               setError(null);
               setNewDirectoryName('');
-            }}>
+            }}
+            size="small">
             Cancel
           </Button>
-          <Button onClick={handleNewDirectory} variant="contained">
+          <Button onClick={handleNewDirectory} variant="contained" size="small">
             Create
           </Button>
         </DialogActions>

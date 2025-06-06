@@ -16,6 +16,7 @@ import {
   Collapse,
   IconButton,
 } from '@mui/material';
+import type { GridProps } from '@mui/material';
 import FolderIcon from '@mui/icons-material/Folder';
 import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -168,10 +169,26 @@ export function ImageGallery({
 
       <Collapse in={isExpanded}>
         {/* Directory Navigation */}
-        <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center', mt: 2 }}>
-          <FormControl sx={{ minWidth: 200 }}>
+        <Box
+          sx={{
+            mb: 2,
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: 2,
+            alignItems: { xs: 'stretch', sm: 'center' },
+            mt: 2,
+          }}>
+          <FormControl
+            sx={{
+              minWidth: { xs: '100%', sm: 200 },
+              width: { xs: '100%', sm: 'auto' },
+            }}>
             <InputLabel>Directory</InputLabel>
-            <Select value={currentDirectory} label="Directory" onChange={e => onDirectoryChange(e.target.value)}>
+            <Select
+              value={currentDirectory}
+              label="Directory"
+              onChange={e => onDirectoryChange(e.target.value)}
+              size="small">
               <MenuItem value="">All</MenuItem>
               {directories.map(dir => (
                 <MenuItem key={dir} value={dir}>
@@ -184,7 +201,12 @@ export function ImageGallery({
           <Button
             variant="outlined"
             startIcon={<CreateNewFolderIcon />}
-            onClick={() => setIsNewDirectoryDialogOpen(true)}>
+            onClick={() => setIsNewDirectoryDialogOpen(true)}
+            size="small"
+            sx={{
+              whiteSpace: 'nowrap',
+              minWidth: { xs: '100%', sm: 'auto' },
+            }}>
             New Directory
           </Button>
         </Box>
@@ -192,13 +214,17 @@ export function ImageGallery({
         {/* Image Grid */}
         <Grid container spacing={2}>
           {filteredImages.map(image => (
-            <Grid item xs={12} sm={6} md={4} key={image.id}>
+            <Grid xs={12} sm={6} md={4} key={image.id}>
               <Box
                 sx={{
                   border: '1px solid #ddd',
                   borderRadius: 1,
                   p: 1,
                   textAlign: 'center',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
                 }}>
                 <img
                   src={image.src}
@@ -209,10 +235,15 @@ export function ImageGallery({
                     objectFit: 'contain',
                   }}
                 />
-                <Typography variant="caption" display="block">
+                <Typography variant="caption" display="block" sx={{ mt: 1 }}>
                   {image.directory}
                 </Typography>
-                <Button variant="contained" color="primary" onClick={() => fetchTableData(image)}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => fetchTableData(image)}
+                  size="small"
+                  sx={{ mt: 1 }}>
                   테이블 생성하기
                 </Button>
               </Box>
@@ -228,7 +259,9 @@ export function ImageGallery({
           setIsNewDirectoryDialogOpen(false);
           setError(null);
           setNewDirectoryName('');
-        }}>
+        }}
+        fullWidth
+        maxWidth="xs">
         <DialogTitle>Create New Directory</DialogTitle>
         <DialogContent>
           <TextField
@@ -243,6 +276,7 @@ export function ImageGallery({
             }}
             error={!!error}
             helperText={error}
+            size="small"
           />
         </DialogContent>
         <DialogActions>
@@ -251,10 +285,11 @@ export function ImageGallery({
               setIsNewDirectoryDialogOpen(false);
               setError(null);
               setNewDirectoryName('');
-            }}>
+            }}
+            size="small">
             Cancel
           </Button>
-          <Button onClick={handleNewDirectory} variant="contained">
+          <Button onClick={handleNewDirectory} variant="contained" size="small">
             Create
           </Button>
         </DialogActions>
