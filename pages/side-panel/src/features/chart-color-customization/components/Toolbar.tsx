@@ -69,6 +69,7 @@ export const Toolbar = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Toolbar.tsx에서 자동 스타일링 부분 수정
   const handleAutoStyle = async (file: File) => {
     try {
       setIsLoading(true);
@@ -90,9 +91,12 @@ export const Toolbar = ({
         // Store the received colors in userCustomColors
         onUpdateUserCustomColors(data.dominant_colors);
 
-        // Apply the colors to the chart
+        // Apply the colors to the chart - 각 색상을 개별적으로 적용
         data.dominant_colors.forEach((color: string, index: number) => {
-          onColorChange(index, color);
+          if (index < requiredColorCount) {
+            // 필요한 색상 개수만큼만 적용
+            onColorChange(index, color);
+          }
         });
       }
     } catch (error) {
@@ -101,7 +105,6 @@ export const Toolbar = ({
       setIsLoading(false);
     }
   };
-
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.type === 'application/pdf') {
@@ -217,11 +220,11 @@ export const Toolbar = ({
       {showColorPicker && (
         <div className="mt-4 pt-4 border-t border-gray-100">
           <ColorPicker
-            colorIndex={0}
-            currentColor={colors[0] || '#000000'}
-            onColorChange={onColorChange}
+            onColorChange={(color: string) => onColorChange(0, color)} // ✅ 수정된 부분
             onClose={() => onToggleColorPicker(false)}
+            selectedColor={colors[0] || '#000000'}
             userCustomColors={userCustomColors}
+            show={true}
           />
         </div>
       )}
