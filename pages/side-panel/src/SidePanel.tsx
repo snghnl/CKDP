@@ -2,8 +2,8 @@ import '@src/SidePanel.css';
 import { withErrorBoundary, withSuspense } from '@extension/shared';
 import { Divider, Typography, Box } from '@mui/material';
 import { IndexingList } from '@src/features/chart-index/IndexingList';
+import { DataSourcePanel } from '@src/features/data-source/components/DataSourcePanel';
 import ChartColorCustom from '@src/features/chart-color-customization/ChartColorCustom';
-import { DataSource } from '@src/features/data-source/DataSource';
 import { AuthButton } from '@src/auth/AuthButton';
 import { useState, useEffect } from 'react';
 import type { Chart } from '@extension/shared';
@@ -94,7 +94,7 @@ const SidePanel = () => {
       <Typography variant="h1" sx={{ fontSize: '2rem', fontWeight: 'bold' }}>
         Data Source
       </Typography>
-      <DataSource />
+      <DataSourcePanel />
     </div>
   );
 };
