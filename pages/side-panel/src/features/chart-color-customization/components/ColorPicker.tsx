@@ -51,7 +51,10 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
           {predefinedColors.map(color => (
             <button
               key={color}
-              onClick={() => onColorChange(color)}
+              onClick={() => {
+                onColorChange(color);
+                setCustomColor(color); // 여기서 상태 업데이트
+              }}
               className="w-8 h-8 rounded-md border-2 hover:scale-110 transition-transform"
               style={{
                 backgroundColor: color,
@@ -69,7 +72,10 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
           {userCustomColors.map((color, index) => (
             <button
               key={`user-${index}`}
-              onClick={() => onColorChange(color)}
+              onClick={() => {
+                onColorChange(color);
+                setCustomColor(color);
+              }}
               className="w-8 h-8 rounded-md border-2 hover:scale-110 transition-transform"
               style={{
                 backgroundColor: color,
