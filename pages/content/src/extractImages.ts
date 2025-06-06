@@ -1,31 +1,70 @@
-import { Image } from '@extension/shared';
+let imagePickerActive = false;
 
-export function extractImageTagsFromPage(): HTMLImageElement[] {
-  // Get all img elements from the body
-  const images = document.body.getElementsByTagName('img');
-  console.log(`found ${images.length} images`);
+// Notify that content script is ready
+chrome.runtime.sendMessage({ type: 'content-script-ready' });
 
-  // Convert HTMLCollection to Array for easier manipulation
-  return Array.from(images);
+// Function to set cursor style
+function setCursorStyle(active: boolean) {
+  try {
+    document.body.style.cursor = active ? 'crosshair' : 'auto';
+  } catch (error) {
+    console.error('Error setting cursor style:', error);
+  }
 }
-export function processImageTags(images: HTMLImageElement[]): Image[] {
-  return images.map(img => ({
-    id: img.id,
-    url: img.src,
-    description: img.alt,
-    width: img.width,
-    height: img.height,
-    // DOM interaction properties
-    elementId: img.id,
-    elementPath: img.src,
-    pageUrl: window.location.href,
-    captureTimestamp: Date.now(),
-    // Position information for scrolling
-    boundingRect: {
-      top: img.offsetTop,
-      left: img.offsetLeft,
-      width: img.offsetWidth,
-      height: img.offsetHeight,
-    },
-  }));
-}
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'activate-image-picker') {
+    try {
+      imagePickerActive = true;
+      setCursorStyle(true);
+      sendResponse({ success: true });
+    } catch (error) {
+      console.error('Error activating image picker:', error);
+      sendResponse({ success: false, error: 'Failed to activate image picker' });
+    }
+  }
+  return true; // Keep the message channel open for async response
+});
+
+document.addEventListener(
+  'click',
+  function handleClick(e) {
+    if (!imagePickerActive) return;
+
+    const target = e.target as HTMLImageElement;
+    if (target.tagName.toLowerCase() === 'img') {
+      const info = {
+        src: target.src,
+        alt: target.alt || '',
+        width: target.width,
+        height: target.height,
+      };
+
+      // Cleanup first to ensure UI is responsive
+      imagePickerActive = false;
+      setCursorStyle(false);
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Send message after cleanup
+      try {
+        chrome.runtime
+          .sendMessage({
+            type: 'image-picked',
+            payload: info,
+          })
+          .catch(error => {
+            console.error('Error sending image info:', error);
+          });
+      } catch (error) {
+        console.error('Error sending message:', error);
+      }
+    }
+  },
+  true,
+);
+
+// Ensure cursor is reset when the page is unloaded
+window.addEventListener('unload', () => {
+  setCursorStyle(false);
+});
