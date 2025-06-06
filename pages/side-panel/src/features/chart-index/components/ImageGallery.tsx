@@ -20,25 +20,26 @@ import FolderIcon from '@mui/icons-material/Folder';
 import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-
-interface SavedImage {
-  id: string;
-  src: string;
-  alt: string;
-  width: number;
-  height: number;
-  directory: string;
-  savedAt: string;
-}
+import { Chart, SavedImage, Citation } from '@extension/shared';
+import { makeNewChart, makeNewCitation } from '@extension/shared';
 
 interface ImageGalleryProps {
   images: SavedImage[];
   currentDirectory: string;
   onDirectoryChange: (directory: string) => void;
   onNewDirectory: (directory: string) => void;
+  onNewChart: (image: Chart) => void;
+  onNewCitation: (citation: Citation[]) => void;
 }
 
-export function ImageGallery({ images, currentDirectory, onDirectoryChange, onNewDirectory }: ImageGalleryProps) {
+export function ImageGallery({
+  images,
+  currentDirectory,
+  onDirectoryChange,
+  onNewDirectory,
+  onNewChart,
+  onNewCitation,
+}: ImageGalleryProps) {
   const [isNewDirectoryDialogOpen, setIsNewDirectoryDialogOpen] = useState(false);
   const [newDirectoryName, setNewDirectoryName] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -60,6 +61,23 @@ export function ImageGallery({ images, currentDirectory, onDirectoryChange, onNe
     setNewDirectoryName('');
     setError(null);
     setIsNewDirectoryDialogOpen(false);
+  };
+
+  const fetchTableData = async (image: SavedImage) => {
+    try {
+      const response = await fetch('http://localhost:3000/api/table-data', {
+        method: 'POST',
+        body: JSON.stringify({ file: image.src }),
+      });
+      const data = await response.json();
+
+      const chart = makeNewChart(image, data);
+      const citation = makeNewCitation(data);
+
+      onNewChart(chart);
+    } catch (error) {
+      console.error('Error fetching table data:', error);
+    }
   };
 
   return (
@@ -127,6 +145,9 @@ export function ImageGallery({ images, currentDirectory, onDirectoryChange, onNe
                 <Typography variant="caption" display="block">
                   {image.directory}
                 </Typography>
+                <Button variant="contained" color="primary" onClick={() => fetchTableData(image)}>
+                  테이블 생성하기
+                </Button>
               </Box>
             </Grid>
           ))}

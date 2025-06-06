@@ -3,18 +3,15 @@ import { Box } from '@mui/material';
 import { ImagePicker } from './components/ImagePicker';
 import { ImagePreview } from './components/ImagePreview';
 import { ImageGallery } from './components/ImageGallery';
+import { Chart, SavedImage, Citation } from '@extension/shared';
 
-interface SavedImage {
-  id: string;
-  src: string;
-  alt: string;
-  width: number;
-  height: number;
-  directory: string;
-  savedAt: string;
-}
-
-export function IndexingList() {
+export function IndexingList({
+  setChart,
+  setCitation,
+}: {
+  setChart: (chart: Chart) => void;
+  setCitation: (citation: Citation[]) => void;
+}) {
   const [imageInfo, setImageInfo] = useState<any>(null);
   const [savedImages, setSavedImages] = useState<SavedImage[]>([]);
   const [currentDirectory, setCurrentDirectory] = useState<string>('');
@@ -70,6 +67,8 @@ export function IndexingList() {
         currentDirectory={currentDirectory}
         onDirectoryChange={setCurrentDirectory}
         onNewDirectory={handleNewDirectory}
+        onNewChart={setChart}
+        onNewCitation={setCitation}
       />
     </Box>
   );
