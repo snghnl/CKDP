@@ -1,11 +1,11 @@
 {
   "extensionDescription": {
     "description": "Extension description",
-    "message": "Chrome extension boilerplate developed with Vite, React and Typescript"
+    "message": "CKDP"
   },
   "extensionName": {
     "description": "Extension name",
-    "message": "Chrome extension boilerplate"
+    "message": "CKDP"
   },
   "toggleTheme": {
     "message": "Toggle theme"
@@ -19,7 +19,7 @@
     "placeholders": {
       "name": {
         "content": "$1",
-        "example": "John Doe"
+        "example": "CKDP"
       }
     }
   },

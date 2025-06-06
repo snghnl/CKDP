@@ -1,11 +1,11 @@
 {
   "extensionDescription": {
     "description": "Extension description",
-    "message": "Material Picker"
+    "message": "찰칵도표"
   },
   "extensionName": {
     "description": "Extension name",
-    "message": "Material Picker"
+    "message": "찰칵도표"
   },
   "toggleTheme": {
     "message": "테마 변경"
@@ -19,7 +19,7 @@
     "placeholders": {
       "name": {
         "content": "$1",
-        "example": "서종학"
+        "example": "찰칵도표"
       }
     }
   },
