@@ -27,6 +27,7 @@ interface ChartViewerProps {
   gridInterval: number | 'auto';
   onBarDirectionChange?: (direction: BarDirection) => void;
   onChartContainerReady?: (element: HTMLDivElement | null) => void;
+  onSeriesSelect?: (index: number) => void;
 }
 
 export const ChartViewer = ({
@@ -38,6 +39,7 @@ export const ChartViewer = ({
   gridInterval,
   onBarDirectionChange,
   onChartContainerReady,
+  onSeriesSelect,
 }: ChartViewerProps) => {
   const chartRef = useRef<HTMLDivElement>(null);
 
@@ -236,10 +238,11 @@ export const ChartViewer = ({
             .on('mouseout', function () {
               d3.select(this).transition().duration(200).attr('opacity', 1).attr('filter', 'none');
               d3.selectAll('.tooltip').remove();
-            });
+            })
+            .on('click', () => onSeriesSelect?.(index));
         });
       } else {
-        // 세로 막대 (기존 코드)
+        // 세로 막대 (기졸 코드)
         const barWidth = x.bandwidth() / headers.slice(1).length;
         headers.slice(1).forEach((header, index) => {
           svg
@@ -282,7 +285,8 @@ export const ChartViewer = ({
             .on('mouseout', function () {
               d3.select(this).transition().duration(200).attr('opacity', 1).attr('filter', 'none');
               d3.selectAll('.tooltip').remove();
-            });
+            })
+            .on('click', () => onSeriesSelect?.(index));
         });
       }
     } else if (view === 'line' || view === 'area') {
@@ -374,7 +378,8 @@ export const ChartViewer = ({
           .attr('cx', d => x(d[headers[0]]) || 0)
           .attr('cy', d => y(d[header]))
           .attr('r', 4)
-          .attr('fill', colors[index] || predefinedColors[index % predefinedColors.length]);
+          .attr('fill', colors[index] || predefinedColors[index % predefinedColors.length])
+          .on('click', () => onSeriesSelect?.(index));
       });
     } else if (view === 'pie') {
       const radius = Math.min(width, height) / 2;
@@ -402,7 +407,8 @@ export const ChartViewer = ({
         .attr('d', arc)
         .attr('fill', d => d.data.color)
         .attr('stroke', 'white')
-        .style('stroke-width', '2px');
+        .style('stroke-width', '2px')
+        .on('click', (event, d) => onSeriesSelect?.(d.index));
 
       const labelArc = d3
         .arc<any>()
@@ -415,7 +421,7 @@ export const ChartViewer = ({
         .attr('text-anchor', 'middle')
         .text(d => d.data.name);
     }
-  }, [tableData, view, barDirection, showGrid, colors, gridInterval]);
+  }, [tableData, view, barDirection, showGrid, colors, gridInterval, onSeriesSelect]);
 
   useEffect(() => {
     console.log('useEffect triggered');
@@ -440,7 +446,7 @@ export const ChartViewer = ({
       console.log('useEffect cleanup: disconnecting ResizeObserver');
       resizeObserver.disconnect();
     };
-  }, [drawChart, chartRef, onChartContainerReady]);
+  }, [drawChart, chartRef, onChartContainerReady, onSeriesSelect]);
 
   if (view === 'table') {
     return (

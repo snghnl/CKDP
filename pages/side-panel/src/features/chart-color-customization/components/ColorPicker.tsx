@@ -1,5 +1,7 @@
+//ColorPicker.tsx
+
 import { useState } from 'react';
-import { ColorPickerProps } from '@extension/shared';
+
 
 // 부드러운 무지개 색상 (빨주노초 순서 반영 및 개선)
 const predefinedColors = [
@@ -17,19 +19,29 @@ const predefinedColors = [
   '#1E90FF', // 파란색 (DodgerBlue)
 ];
 
-export const ColorPicker = ({
-  colorIndex, // ✅ 추가
-  currentColor,
-  onColorChange,
+interface ColorPickerProps {
+  show: boolean;
+  onClose: () => void;
+  onColorChange: (color: string) => void;
+  selectedColor?: string;
+  userCustomColors: string[];
+}
+
+export const ColorPicker: React.FC<ColorPickerProps> = ({
+  show,
   onClose,
+  onColorChange,
+  selectedColor,
   userCustomColors,
-}: ColorPickerProps) => {
-  const [customColor, setCustomColor] = useState<string>(currentColor);
+}) => {
+  const [customColor, setCustomColor] = useState<string>(selectedColor || '#000000');
 
   const handleCustomChange = (color: string) => {
     setCustomColor(color);
-    onColorChange(colorIndex, color); // ✅ colorIndex 포함해서 전달
+    onColorChange(color);
   };
+
+  if (!show) return null;
 
   return (
     <div className="absolute top-full mt-2 left-0 bg-white border border-gray-300 rounded-lg p-4 shadow-lg z-50 min-w-[280px]">
@@ -39,11 +51,11 @@ export const ColorPicker = ({
           {predefinedColors.map(color => (
             <button
               key={color}
-              onClick={() => onColorChange(colorIndex, color)} // ✅ 고침
+              onClick={() => onColorChange(color)}
               className="w-8 h-8 rounded-md border-2 hover:scale-110 transition-transform"
               style={{
                 backgroundColor: color,
-                borderColor: currentColor === color ? '#374151' : '#d1d5db',
+                borderColor: selectedColor === color ? '#374151' : '#d1d5db',
               }}
               title={color}
             />
@@ -57,11 +69,11 @@ export const ColorPicker = ({
           {userCustomColors.map((color, index) => (
             <button
               key={`user-${index}`}
-              onClick={() => onColorChange(colorIndex, color)}
+              onClick={() => onColorChange(color)}
               className="w-8 h-8 rounded-md border-2 hover:scale-110 transition-transform"
               style={{
                 backgroundColor: color,
-                borderColor: currentColor === color ? '#374151' : '#d1d5db',
+                borderColor: selectedColor === color ? '#374151' : '#d1d5db',
               }}
               title={color}
             />
@@ -75,7 +87,7 @@ export const ColorPicker = ({
           type="color"
           value={customColor}
           onChange={e => handleCustomChange(e.target.value)}
-          className="w-1/3 h-10 rounded-md  cursor-pointer"
+          className="w-1/3 h-10 rounded-md cursor-pointer"
         />
       </div>
 
