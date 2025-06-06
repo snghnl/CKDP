@@ -409,7 +409,7 @@ export const ChartViewer = ({
           .attr('transform', d => `translate(${labelArc.centroid(d)})`)
           .attr('text-anchor', 'middle')
           .attr('font-size', '12px')
-          .attr('fill', 'white')
+          .attr('fill', 'black')
           .text(d => d.data.name);
       } catch (error) {
         console.error('Pie chart rendering error:', error);
