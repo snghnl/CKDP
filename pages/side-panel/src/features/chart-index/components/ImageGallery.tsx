@@ -22,6 +22,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { Chart, SavedImage, Citation } from '@extension/shared';
 import { makeNewChart, makeNewCitation } from '@extension/shared';
+import { supabase } from '../../../lib/supabase';
 
 interface ImageGalleryProps {
   images: SavedImage[];
@@ -65,18 +66,84 @@ export function ImageGallery({
 
   const fetchTableData = async (image: SavedImage) => {
     try {
-      const response = await fetch('http://localhost:3000/api/table-data', {
+      // Get current session
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
+      if (sessionError) {
+        throw new Error('Failed to get session: ' + sessionError.message);
+      }
+
+      if (!session?.access_token) {
+        throw new Error('No authentication token available. Please sign in again.');
+      }
+
+      // Check if token is expired
+      const tokenExp = session.expires_at;
+      if (tokenExp && tokenExp * 1000 < Date.now()) {
+        // Try to refresh the session
+        const {
+          data: { session: newSession },
+          error: refreshError,
+        } = await supabase.auth.refreshSession();
+
+        if (refreshError) {
+          throw new Error('Failed to refresh session: ' + refreshError.message);
+        }
+
+        if (!newSession?.access_token) {
+          throw new Error('Failed to refresh session. Please sign in again.');
+        }
+      }
+
+      // Get the current token (either original or refreshed)
+      const {
+        data: { session: currentSession },
+      } = await supabase.auth.getSession();
+      const token = currentSession?.access_token;
+
+      if (!token) {
+        throw new Error('No valid authentication token available. Please sign in again.');
+      }
+
+      const response = await fetch('https://ckdp-backend-1071583860130.europe-west1.run.app/openai/convert', {
         method: 'POST',
-        body: JSON.stringify({ file: image.src }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ image_url: image.src }),
       });
-      const data = await response.json();
 
-      const chart = makeNewChart(image, data);
-      const citation = makeNewCitation(data);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API request failed with status ${response.status}: ${errorText}`);
+      }
 
-      onNewChart(chart);
+      const responseData = await response.json();
+
+      if (!responseData) {
+        throw new Error('Invalid response data format');
+      }
+
+      const chart = makeNewChart(image, responseData);
+      const citation = makeNewCitation(responseData);
+
+      if (chart && citation) {
+        onNewChart(chart);
+        onNewCitation(citation);
+      } else {
+        throw new Error('Failed to create chart or citation');
+      }
     } catch (error) {
       console.error('Error fetching table data:', error);
+      if (error instanceof Error) {
+        alert(error.message);
+      } else {
+        alert('테이블 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
+      }
     }
   };
 
