@@ -8,7 +8,7 @@ import { ChartTable } from './components/ChartTable';
 import { Toolbar } from './components/Toolbar';
 import { ChartSelector } from './components/ChartSelector';
 import { MockDataService } from './services/mockDataService';
-import { Chart, ChartData, ChartView, BarDirection } from '@extension/shared';
+import { ChartData, ChartView, BarDirection, Chart } from '@extension/shared';
 import { ColorPicker } from './components/ColorPicker';
 import { Paper } from '@mui/material';
 
@@ -28,8 +28,12 @@ const predefinedColors = [
   '#1E90FF', // 파란색 (DodgerBlue)
 ];
 
-export default function ChartColorCustom() {
+interface ChartColorCustomProps {
+  chart: Chart;
+  setChart?: (chart: Chart) => void;
+}
 
+export default function ChartColorCustom({ chart, setChart }: ChartColorCustomProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const [chartContainerElement, setChartContainerElement] = useState<HTMLDivElement | null>(null);
 
