@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ColorPickerProps } from '../types';
+import { ColorPickerProps } from '@extension/shared';
 
 // 부드러운 무지개 색상 (빨주노초 순서 반영 및 개선)
 const predefinedColors = [

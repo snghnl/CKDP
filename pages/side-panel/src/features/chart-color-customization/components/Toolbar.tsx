@@ -1,5 +1,5 @@
 import { Palette, Bot } from 'lucide-react';
-import { ChartView, BarDirection, ShowColorPickerState } from '../types';
+import { ChartView, BarDirection, ShowColorPickerState } from '@extension/shared';
 import { ColorPicker } from './ColorPicker';
 import { TableChart, BarChart, ShowChart, PieChart, AreaChart } from '@mui/icons-material';
 import { IconButton, Tooltip, Paper } from '@mui/material';

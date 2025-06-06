@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 import * as d3 from 'd3';
-import { ChartData, ChartView, BarDirection } from '../types';
+import { ChartData, ChartView, BarDirection } from '@extension/shared';
 
 // 부드러운 무지개 색상
 const predefinedColors = [
