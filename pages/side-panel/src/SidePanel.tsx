@@ -2,7 +2,7 @@ import '@src/SidePanel.css';
 import { Citation, withErrorBoundary, withSuspense } from '@extension/shared';
 import { Divider, Typography, Box, Tabs, Tab, useTheme, useMediaQuery } from '@mui/material';
 import { IndexingList } from '@src/features/chart-index/IndexingList';
-import { DataSourcePanel } from '@src/features/data-source/components/DataSourcePanel';
+import { DataSource } from '@src/features/data-source/DataSource';
 import ChartColorCustom from '@src/features/chart-color-customization/ChartColorCustom';
 import { AuthButton } from '@src/auth/AuthButton';
 import { useState, useEffect } from 'react';
@@ -132,7 +132,7 @@ const SidePanel = () => {
           }}>
           Data Source
         </Typography>
-        <DataSourcePanel citations={citation} />
+        <DataSource />
       </TabPanel>
     </div>
   );
