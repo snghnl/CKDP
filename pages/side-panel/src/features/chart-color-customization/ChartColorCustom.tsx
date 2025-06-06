@@ -66,11 +66,17 @@ export default function ChartColorCustom({ chart }: { chart: Chart }) {
     const loadCharts = async () => {
       setLoading(true);
       try {
-        setAvailableCharts([chart, ...availableCharts]);
-        if (availableCharts.length > 0) {
-          setSelectedChartId(availableCharts[0].id);
-          loadChartData(availableCharts[0]);
+        // Check if the chart already exists in availableCharts
+        const chartExists = availableCharts.some(c => c.id === chart.id);
+
+        if (!chartExists) {
+          // Add new chart to the list if it doesn't exist
+          setAvailableCharts(prevCharts => [...prevCharts, chart]);
         }
+
+        // Set the current chart as selected and load its data
+        setSelectedChartId(chart.id);
+        loadChartData(chart);
       } catch (error) {
         console.error('Error loading charts:', error);
       } finally {
