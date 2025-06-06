@@ -49,7 +49,7 @@ const SidePanel = () => {
       <Typography variant="h1" sx={{ fontSize: '2rem', fontWeight: 'bold' }}>
         Chart Customization
       </Typography>
-      <ChartColorCustom chart={chart} />
+      <ChartColorCustom chart={chart} setChart={setChart} />
       <Divider />
       <Typography variant="h1" sx={{ fontSize: '2rem', fontWeight: 'bold' }}>
         Data Source

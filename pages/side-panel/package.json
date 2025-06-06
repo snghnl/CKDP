@@ -36,8 +36,8 @@
     "dom-to-image": "^2.6.0",
     "html2canvas": "^1.4.1",
     "lucide-react": "^0.511.0",
+    "react-draggable": "^4.4.6",
     "recharts": "^2.15.3"
-
   },
   "devDependencies": {
     "@extension/tailwindcss-config": "workspace:*",
