@@ -75,7 +75,7 @@ export function ImagePicker({ onImagePicked }: ImagePickerProps) {
 
       {error && (
         <Typography color="error" align="center" sx={{ mb: 2 }}>
-          {error}
+          {'새로고침을 해주세요.'}
         </Typography>
       )}
     </Box>
