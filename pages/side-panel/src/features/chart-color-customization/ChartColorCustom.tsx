@@ -1,7 +1,7 @@
-//ChartColorCustom.tsx
+// ChartColorCustom.tsx
 import { useEffect, useRef, useState } from 'react';
 import { Download, RefreshCw } from 'lucide-react';
-import html2canvas from 'html2canvas'; // 설치된 html2canvas 라이브러리 임포트
+import html2canvas from 'html2canvas';
 
 import { ChartViewer } from './components/ChartViewer';
 import { ChartTable } from './components/ChartTable';
@@ -10,22 +10,20 @@ import { ChartSelector } from './components/ChartSelector';
 import { MockDataService } from './services/mockDataService';
 import { ChartData, ChartView, BarDirection, Chart } from '@extension/shared';
 import { ColorPicker } from './components/ColorPicker';
-import { Paper } from '@mui/material';
 
-// 부드러운 무지개 색상 (빨주노초 순서 반영 및 개선)
 const predefinedColors = [
-  '#FF6347', // 빨강 (Tomato)
-  '#FF7F50', // 주황 (Coral)
-  '#FFD700', // 노랑 (Gold)
-  '#9ACD32', // 연두 (YellowGreen)
-  '#66CDAA', // 초록 (MediumAquamarine)
-  '#00CED1', // 청록 (DarkTurquoise)
-  '#4682B4', // 파랑 (SteelBlue)
-  '#8A2BE2', // 보라 (BlueViolet)
-  '#FF69B4', // 분홍 (HotPink)
-  '#E9967A', // 주황빛 갈색 (DarkSalmon)
-  '#ADFF2F', // 연두색 (GreenYellow)
-  '#1E90FF', // 파란색 (DodgerBlue)
+  '#FF6347',
+  '#FF7F50',
+  '#FFD700',
+  '#9ACD32',
+  '#66CDAA',
+  '#00CED1',
+  '#4682B4',
+  '#8A2BE2',
+  '#FF69B4',
+  '#E9967A',
+  '#ADFF2F',
+  '#1E90FF',
 ];
 
 interface ChartColorCustomProps {
@@ -39,129 +37,102 @@ export default function ChartColorCustom({ chart, setChart }: ChartColorCustomPr
 
   const [view, setView] = useState<ChartView>('table');
   const [barDirection, setBarDirection] = useState<BarDirection>('vertical');
-  const [tableData, setTableData] = useState<ChartData>({
-    headers: ['Category', 'Value'],
-    rows: [['', '']],
-  });
+  const [tableData, setTableData] = useState<ChartData>({ headers: ['Category', 'Value'], rows: [['', '']] });
   const [showGrid, setShowGrid] = useState<boolean>(true);
   const [colors, setColors] = useState<string[]>([]);
   const [availableCharts, setAvailableCharts] = useState<Chart[]>([]);
   const [selectedChartId, setSelectedChartId] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [userCustomColors, setUserCustomColors] = useState<string[]>(['#FF6B6B', '#4ECDC4', '#45B7D1']);
-
-  // 색상 편집 상태를 추적하는 새로운 상태 추가
   const [hasCustomColorEdits, setHasCustomColorEdits] = useState<boolean>(false);
   const [editedColorIndices, setEditedColorIndices] = useState<Set<number>>(new Set());
 
-  // 새로 추가된 그리드 간격 상태
   const [gridInterval, setGridInterval] = useState<number | 'auto'>('auto');
   const [gridIntervalInput, setGridIntervalInput] = useState<string>('auto');
 
-  // 색상 선택기 표시 상태 (단일 boolean으로 변경)
   const [showColorPicker, setShowColorPicker] = useState<boolean>(false);
   const [selectedSeriesIndex, setSelectedSeriesIndex] = useState<number | null>(null);
 
-  // Load available charts on component mount
+  // 초기 차트 로드
   useEffect(() => {
-    const loadCharts = async () => {
+    const init = async () => {
       setLoading(true);
       try {
-        // Check if the chart already exists in availableCharts
-        const chartExists = availableCharts.some(c => c.id === chart.id);
-
-        if (!chartExists) {
-          // Add new chart to the list if it doesn't exist
-          setAvailableCharts(prevCharts => [...prevCharts, chart]);
-        }
-
-        // Set the current chart as selected and load its data
         setSelectedChartId(chart.id);
+        setAvailableCharts(prev => (prev.some(c => c.id === chart.id) ? prev : [...prev, chart]));
         loadChartData(chart);
-      } catch (error) {
-        console.error('Error loading charts:', error);
+      } catch (err) {
+        console.error('Error during initial load:', err);
       } finally {
         setLoading(false);
       }
     };
-
-    loadCharts();
+    init();
   }, [chart]);
 
-  // Load chart data
+  // ChartData 로드
   const loadChartData = (chart: Chart) => {
-    const convertedData: ChartData = {
+    const data: ChartData = {
       headers: chart.data.headers,
       rows: chart.data.rows.map(row => row.map(cell => String(cell))),
     };
 
-    setTableData(convertedData);
+    setTableData(data);
     setShowGrid(chart.showGrid);
 
-    // Set colors based on chart's primary and secondary colors
     const chartColors = [chart.colors.primary, chart.colors.secondary];
-    const requiredColors = Math.max(1, convertedData.headers.length - 1);
-    const newColors = [];
+    const required = Math.max(1, data.headers.length - 1);
+    const newColors: string[] = [];
 
-    for (let i = 0; i < requiredColors; i++) {
-      if (i < chartColors.length && chartColors[i]) {
-        newColors.push(chartColors[i]);
-      } else {
-        newColors.push(predefinedColors[i % predefinedColors.length]);
-      }
+    for (let i = 0; i < required; i++) {
+      newColors.push(chartColors[i] || predefinedColors[i % predefinedColors.length]);
     }
 
     setColors(newColors);
-    // 새 차트 로드 시 편집 상태 초기화
     setHasCustomColorEdits(false);
     setEditedColorIndices(new Set());
   };
 
-  // Handle chart selection change
+  // 차트 선택 핸들러
   const handleChartChange = async (chartId: string) => {
     setLoading(true);
     try {
-      const chart = await MockDataService.getChartById(chartId);
-      if (chart) {
-        setSelectedChartId(chartId);
+      if (chartId === chart.id) {
+        // new chart 다시 선택한 경우
         loadChartData(chart);
+        setSelectedChartId(chartId);
+        return;
       }
-    } catch (error) {
-      console.error('Error loading chart:', error);
+
+      const foundChart = await MockDataService.getChartById(chartId);
+      if (foundChart) {
+        setSelectedChartId(chartId);
+        loadChartData(foundChart);
+      }
+    } catch (err) {
+      console.error('Error loading selected chart:', err);
     } finally {
       setLoading(false);
     }
   };
 
   // 그리드 간격 입력 처리
-  const handleGridIntervalInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    setGridIntervalInput(value);
-
-    if (value === '' || value.toLowerCase() === 'auto') {
+  const handleGridIntervalInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setGridIntervalInput(val);
+    if (val === '' || val.toLowerCase() === 'auto') {
       setGridInterval('auto');
     } else {
-      const numValue = parseInt(value, 10);
-      if (!isNaN(numValue) && numValue > 0) {
-        setGridInterval(numValue);
-      }
+      const parsed = parseInt(val, 10);
+      if (!isNaN(parsed) && parsed > 0) setGridInterval(parsed);
     }
   };
 
-  // 색상 선택기 토글 (단일 boolean 상태 토글로 변경)
-  const handleToggleColorPicker = (show: boolean) => {
-    setShowColorPicker(show);
-  };
-
-  // 이미지 다운로드 처리
+  // 이미지 다운로드
   const handleDownload = async () => {
-    if (!chartContainerElement) {
-      console.error('Chart container element not found for download.');
-      return;
-    }
-
+    if (!chartContainerElement) return;
+    setLoading(true);
     try {
-      setLoading(true);
       const canvas = await html2canvas(chartContainerElement, {
         scale: 2,
         backgroundColor: null,
@@ -171,110 +142,70 @@ export default function ChartColorCustom({ chart, setChart }: ChartColorCustomPr
 
       const link = document.createElement('a');
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const selectedChart = availableCharts.find(c => c.id === selectedChartId);
-      link.download = `${selectedChart?.name || 'chart'}-${timestamp}.png`;
+      const chartName = availableCharts.find(c => c.id === selectedChartId)?.name || 'chart';
+      link.download = `${chartName}-${timestamp}.png`;
       link.href = canvas.toDataURL('image/png', 1.0);
       link.click();
-    } catch (error) {
-      console.error('Error downloading chart:', error);
+    } catch (err) {
+      console.error('Download failed:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  // 데이터 행 개수에 따라 필요한 색상 개수 계산
-  const getRequiredColorCount = (): number => {
-    if (view === 'pie') return tableData.rows.length;
-    return Math.max(1, tableData.headers.length - 1);
-  };
-
-  // 색상 배열 길이를 데이터에 맞게 조정 (수정된 부분)
+  // 색상 개수 자동 조절
   useEffect(() => {
-    const requiredColors = getRequiredColorCount();
-
-    // 필요한 색상 개수가 현재 색상 배열보다 많을 때만 확장
-    if (requiredColors > colors.length) {
-      const newColors = [...colors];
-
-      // 부족한 색상만 추가 (기존 색상은 유지)
-      for (let i = colors.length; i < requiredColors; i++) {
-        newColors.push(userCustomColors[i] || predefinedColors[i % predefinedColors.length]);
+    const required = getRequiredColorCount();
+    if (required > colors.length) {
+      const extended = [...colors];
+      for (let i = colors.length; i < required; i++) {
+        extended.push(userCustomColors[i] || predefinedColors[i % predefinedColors.length]);
       }
-
-      setColors(newColors);
-    }
-    // 필요한 색상 개수가 적을 때는 배열을 줄이되, 편집된 색상은 보존
-    else if (requiredColors < colors.length) {
-      setColors(colors.slice(0, requiredColors));
-      // 편집된 인덱스도 업데이트
+      setColors(extended);
+    } else if (required < colors.length) {
+      setColors(colors.slice(0, required));
       setEditedColorIndices(prev => {
         const newSet = new Set(prev);
-        // requiredColors보다 큰 인덱스는 제거
-        for (const index of newSet) {
-          if (index >= requiredColors) {
-            newSet.delete(index);
-          }
-        }
+        for (const i of newSet) if (i >= required) newSet.delete(i);
         return newSet;
       });
     }
-  }, [tableData.headers.length, tableData.rows.length, view]); // userCustomColors, predefinedColors 제거
+  }, [tableData.headers.length, tableData.rows.length, view]);
 
-  // 새 행 추가
-  const handleAddRow = () => {
-    const newRow = tableData.headers.map(() => '');
-    const newTableData: ChartData = {
-      ...tableData,
-      rows: [...tableData.rows, newRow],
-    };
-    setTableData(newTableData);
-  };
+  const getRequiredColorCount = (): number =>
+    view === 'pie' ? tableData.rows.length : Math.max(1, tableData.headers.length - 1);
 
-  // 행 삭제
-  const handleDeleteRow = (index: number) => {
-    const newRows = tableData.rows.filter((_, i) => i !== index);
-    const newTableData: ChartData = {
-      ...tableData,
-      rows: newRows,
-    };
-    setTableData(newTableData);
-  };
+  const handleAddRow = () =>
+    setTableData(prev => ({
+      ...prev,
+      rows: [...prev.rows, prev.headers.map(() => '')],
+    }));
 
-  // 셀 편집
-  const handleCellEdit = (rowIndex: number, colIndex: number, value: string) => {
+  const handleDeleteRow = (index: number) =>
+    setTableData(prev => ({
+      ...prev,
+      rows: prev.rows.filter((_, i) => i !== index),
+    }));
+
+  const handleCellEdit = (row: number, col: number, value: string) => {
     const newRows = [...tableData.rows];
-    newRows[rowIndex] = [...newRows[rowIndex]];
-    newRows[rowIndex][colIndex] = value;
-
-    const newTableData: ChartData = {
-      ...tableData,
-      rows: newRows,
-    };
-
-    setTableData(newTableData);
+    newRows[row] = [...newRows[row]];
+    newRows[row][col] = value;
+    setTableData({ ...tableData, rows: newRows });
   };
 
-  // 색상 변경 (수정된 부분)
-  const handleColorChange = (colorIndex: number, color: string) => {
+  const handleColorChange = (index: number, color: string) => {
     const newColors = [...colors];
-    newColors[colorIndex] = color;
+    newColors[index] = color;
     setColors(newColors);
-
-    // 편집된 색상 인덱스 추가
-    setEditedColorIndices(prev => new Set(prev).add(colorIndex));
+    setEditedColorIndices(prev => new Set(prev).add(index));
     setHasCustomColorEdits(true);
   };
 
-  // 시리즈 클릭 시
   const handleSeriesSelect = (index: number) => {
     setSelectedSeriesIndex(index);
     setShowColorPicker(true);
   };
-
-  console.log('Rendering ChartViewer conditional block', {
-    view,
-    tableData: tableData?.headers?.length > 0 ? 'Data available' : 'No data or empty headers',
-  });
 
   if (loading) {
     return (
@@ -317,7 +248,7 @@ export default function ChartColorCustom({ chart, setChart }: ChartColorCustomPr
         colors={colors}
         requiredColorCount={getRequiredColorCount()}
         showColorPicker={showColorPicker}
-        onToggleColorPicker={() => handleToggleColorPicker(!showColorPicker)}
+        onToggleColorPicker={() => setShowColorPicker(!showColorPicker)}
         onColorChange={handleColorChange}
         userCustomColors={userCustomColors}
         onUpdateUserCustomColors={setUserCustomColors}
@@ -330,9 +261,8 @@ export default function ChartColorCustom({ chart, setChart }: ChartColorCustomPr
           onDeleteRow={handleDeleteRow}
           onCellEdit={handleCellEdit}
         />
-
         {view !== 'table' && (
-          <div ref={chartRef} className="bg-white border border-gray-200 rounded-lg p-4">
+          <div ref={chartRef} className="bg-white border border-gray-200 rounded-lg p-4 relative">
             <h3 className="text-lg font-semibold mb-4">차트 미리보기</h3>
             <ChartViewer
               tableData={tableData}
@@ -344,6 +274,24 @@ export default function ChartColorCustom({ chart, setChart }: ChartColorCustomPr
               onChartContainerReady={setChartContainerElement}
               onSeriesSelect={handleSeriesSelect}
             />
+
+            {/* 색상 선택기 - 그래프 내부 아래쪽에 표시 */}
+            {/* 색상 선택기 - 그래프 내부 오버레이로 표시 */}
+            {showColorPicker && (
+              <div className="absolute top-32 left-4 z-10">
+                <ColorPicker
+                  show={showColorPicker}
+                  onClose={() => setShowColorPicker(false)}
+                  onColorChange={color => {
+                    if (selectedSeriesIndex !== null) {
+                      handleColorChange(selectedSeriesIndex, color);
+                    }
+                  }}
+                  selectedColor={selectedSeriesIndex !== null ? colors[selectedSeriesIndex] : undefined}
+                  userCustomColors={userCustomColors}
+                />
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -352,32 +300,16 @@ export default function ChartColorCustom({ chart, setChart }: ChartColorCustomPr
         <div className="mt-4 p-4 bg-gray-50 rounded-lg">
           <h4 className="text-sm font-medium mb-2">범례</h4>
           <div className="flex flex-wrap gap-4">
-            {tableData.headers.slice(1).map((header, index) => (
-              <div key={index} className="flex items-center gap-2">
+            {tableData.headers.slice(1).map((header, i) => (
+              <div key={i} className="flex items-center gap-2">
                 <div
                   className="w-4 h-4 rounded"
-                  style={{ backgroundColor: colors[index] || predefinedColors[index % predefinedColors.length] }}
+                  style={{ backgroundColor: colors[i] || predefinedColors[i % predefinedColors.length] }}
                 />
                 <span className="text-sm">{header}</span>
               </div>
             ))}
           </div>
-        </div>
-      )}
-
-      {showColorPicker && (
-        <div className="mt-4 pt-4 border-t border-gray-100">
-          <ColorPicker
-            show={showColorPicker}
-            onClose={() => setShowColorPicker(false)}
-            onColorChange={color => {
-              if (selectedSeriesIndex !== null) {
-                handleColorChange(selectedSeriesIndex, color);
-              }
-            }}
-            selectedColor={selectedSeriesIndex !== null ? colors[selectedSeriesIndex] : undefined}
-            userCustomColors={userCustomColors}
-          />
         </div>
       )}
     </div>

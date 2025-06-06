@@ -215,19 +215,6 @@ export const Toolbar = ({
           </div>
         </div>
       )}
-
-      {/* 색상 선택기 */}
-      {showColorPicker && (
-        <div className="mt-4 pt-4 border-t border-gray-100">
-          <ColorPicker
-            onColorChange={(color: string) => onColorChange(0, color)} // ✅ 수정된 부분
-            onClose={() => onToggleColorPicker(false)}
-            selectedColor={colors[0] || '#000000'}
-            userCustomColors={userCustomColors}
-            show={true}
-          />
-        </div>
-      )}
     </Paper>
   );
 };
