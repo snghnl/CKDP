@@ -63,19 +63,24 @@ const SidePanel = () => {
 
   return (
     <div className="mt-2 sm:mt-4">
-      <div className="flex justify-end items-center gap-2 px-2 sm:px-4">
-        {user && (
-          <Typography
-            variant="body1"
-            color="text.secondary"
-            sx={{
-              fontSize: isMobile ? '0.875rem' : '1rem',
-              display: { xs: 'none', sm: 'block' },
-            }}>
-            {user.email}
-          </Typography>
-        )}
-        <AuthButton />
+      <div className="flex justify-between items-center gap-2 px-2 sm:px-4">
+        <a href="https://ckdp.vercel.app" target="_blank" rel="noopener noreferrer" className="flex items-center">
+          <img src="logo.png" alt="Logo" className="h-8 w-auto" />
+        </a>
+        <div className="flex items-center gap-2">
+          {user && (
+            <Typography
+              variant="body1"
+              color="text.secondary"
+              sx={{
+                fontSize: isMobile ? '0.875rem' : '1rem',
+                display: { xs: 'none', sm: 'block' },
+              }}>
+              {user.email}
+            </Typography>
+          )}
+          <AuthButton />
+        </div>
       </div>
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
