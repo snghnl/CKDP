@@ -1,3 +1,5 @@
+//Toolbar.tsx
+
 import { Palette, Bot } from 'lucide-react';
 import { ChartView, BarDirection, ShowColorPickerState } from '../types';
 import { ColorPicker } from './ColorPicker';

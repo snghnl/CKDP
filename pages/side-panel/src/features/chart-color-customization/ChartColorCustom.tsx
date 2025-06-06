@@ -60,6 +60,7 @@ export default function ChartColorCustom() {
 
   // 색상 선택기 표시 상태 (단일 boolean으로 변경)
   const [showColorPicker, setShowColorPicker] = useState<boolean>(false);
+  const [selectedSeriesIndex, setSelectedSeriesIndex] = useState<number | null>(null);
 
   // Load available charts on component mount
   useEffect(() => {
@@ -231,15 +232,22 @@ export default function ChartColorCustom() {
   };
 
   // 색상 변경
-  const handleColorChange = (colorIndex: number, color: string) => {
-    const newColors = [...colors];
-    newColors[colorIndex] = color;
-    setColors(newColors);
-
-    // 사용자 지정 색상에도 추가 (선택적으로)
-    if (!userCustomColors.includes(color)) {
-      setUserCustomColors(prev => [...prev, color]);
+  const handleColorChange = (color: string) => {
+    if (selectedSeriesIndex !== null) {
+      const newColors = [...colors];
+      newColors[selectedSeriesIndex] = color;
+      setColors(newColors);
+      // 사용자 지정 색상 추가 (중복 방지)
+      if (!userCustomColors.includes(color) && !predefinedColors.includes(color)) {
+        setUserCustomColors([...userCustomColors, color]);
+      }
     }
+  };
+
+  // 시리즈 클릭 시
+  const handleSeriesSelect = (index: number) => {
+    setSelectedSeriesIndex(index);
+    setShowColorPicker(true);
   };
 
   console.log('Rendering ChartViewer conditional block', {
@@ -323,6 +331,7 @@ export default function ChartColorCustom() {
               gridInterval={gridInterval}
               // chartSvgRef={chartSvgTargetRef} // <-- ref 전달 부분 제거
               onChartContainerReady={setChartContainerElement} // <-- 새로운 콜백 prop 전달
+              onSeriesSelect={handleSeriesSelect}
             />
           </div>
         )}
@@ -351,10 +360,10 @@ export default function ChartColorCustom() {
         <div className="mt-4 pt-4 border-t border-gray-100">
           {/* ColorPicker 컴포넌트에 필요한 props 전달 */}
           <ColorPicker
-            colorIndex={0} // 첫 번째 색상 인덱스 (예시)
-            currentColor={colors[0] || predefinedColors[0]}
+            show={showColorPicker}
+            onClose={() => setShowColorPicker(false)}
             onColorChange={handleColorChange}
-            onClose={() => handleToggleColorPicker(false)}
+            selectedColor={selectedSeriesIndex !== null ? colors[selectedSeriesIndex] : undefined}
             userCustomColors={userCustomColors}
           />
         </div>
