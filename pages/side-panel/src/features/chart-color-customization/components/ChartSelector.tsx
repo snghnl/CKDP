@@ -1,5 +1,5 @@
 //ChartSelector.tsx
-import { Chart } from '../types';
+import { Chart } from '@extension/shared';
 
 interface ChartSelectorProps {
   charts: Chart[];

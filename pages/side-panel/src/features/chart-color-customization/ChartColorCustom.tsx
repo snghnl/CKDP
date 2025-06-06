@@ -8,7 +8,7 @@ import { ChartTable } from './components/ChartTable';
 import { Toolbar } from './components/Toolbar';
 import { ChartSelector } from './components/ChartSelector';
 import { MockDataService } from './services/mockDataService';
-import { Chart, ChartData, ChartView, BarDirection, ShowColorPickerState } from './types';
+import { Chart, ChartData, ChartView, BarDirection } from '@extension/shared';
 import { ColorPicker } from './components/ColorPicker';
 import { Paper } from '@mui/material';
 
@@ -31,7 +31,7 @@ const predefinedColors = [
 // 사용자 정의 html2canvas 구현 제거
 // const html2canvas = async (element: HTMLElement, options: any = {}) => { ... };
 
-export default function ChartColorCustom() {
+export default function ChartColorCustom({ chart }: { chart: Chart }) {
   // ChartViewer 내부의 SVG 컨테이너를 위한 ref (제거합니다)
   // const chartSvgTargetRef = useRef<HTMLDivElement | null>(null);
 
@@ -67,12 +67,17 @@ export default function ChartColorCustom() {
     const loadCharts = async () => {
       setLoading(true);
       try {
-        const charts = await MockDataService.getCharts();
-        setAvailableCharts(charts);
-        if (charts.length > 0) {
-          setSelectedChartId(charts[0].id);
-          loadChartData(charts[0]);
+        // Check if the chart already exists in availableCharts
+        const chartExists = availableCharts.some(c => c.id === chart.id);
+
+        if (!chartExists) {
+          // Add new chart to the list if it doesn't exist
+          setAvailableCharts(prevCharts => [...prevCharts, chart]);
         }
+
+        // Set the current chart as selected and load its data
+        setSelectedChartId(chart.id);
+        loadChartData(chart);
       } catch (error) {
         console.error('Error loading charts:', error);
       } finally {
@@ -81,7 +86,7 @@ export default function ChartColorCustom() {
     };
 
     loadCharts();
-  }, []);
+  }, [chart]);
 
   // Load chart data
   const loadChartData = (chart: Chart) => {

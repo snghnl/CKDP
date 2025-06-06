@@ -1,5 +1,5 @@
 //mockDataService.ts
-import { Chart, Image } from '../types';
+import { Chart, Image } from '@extension/shared';
 
 // Mock data
 const mockImages: Image[] = [

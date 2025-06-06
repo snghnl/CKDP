@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Source, CitationFormat } from '../types';
+import { Source, CitationFormat } from '@extension/shared';
 import { mockSources } from '../mockData';
 
 // Mock 데이터 서비스
