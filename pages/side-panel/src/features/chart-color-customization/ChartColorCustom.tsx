@@ -8,7 +8,7 @@ import { ChartTable } from './components/ChartTable';
 import { Toolbar } from './components/Toolbar';
 import { ChartSelector } from './components/ChartSelector';
 import { MockDataService } from './services/mockDataService';
-import { Chart, ChartData, ChartView, BarDirection, ShowColorPickerState } from './types';
+import { Chart, ChartData, ChartView, BarDirection } from '@extension/shared';
 import { ColorPicker } from './components/ColorPicker';
 import { Paper } from '@mui/material';
 
@@ -29,6 +29,7 @@ const predefinedColors = [
 ];
 
 export default function ChartColorCustom() {
+
   const chartRef = useRef<HTMLDivElement>(null);
   const [chartContainerElement, setChartContainerElement] = useState<HTMLDivElement | null>(null);
 
@@ -62,12 +63,17 @@ export default function ChartColorCustom() {
     const loadCharts = async () => {
       setLoading(true);
       try {
-        const charts = await MockDataService.getCharts();
-        setAvailableCharts(charts);
-        if (charts.length > 0) {
-          setSelectedChartId(charts[0].id);
-          loadChartData(charts[0]);
+        // Check if the chart already exists in availableCharts
+        const chartExists = availableCharts.some(c => c.id === chart.id);
+
+        if (!chartExists) {
+          // Add new chart to the list if it doesn't exist
+          setAvailableCharts(prevCharts => [...prevCharts, chart]);
         }
+
+        // Set the current chart as selected and load its data
+        setSelectedChartId(chart.id);
+        loadChartData(chart);
       } catch (error) {
         console.error('Error loading charts:', error);
       } finally {
@@ -76,7 +82,7 @@ export default function ChartColorCustom() {
     };
 
     loadCharts();
-  }, []);
+  }, [chart]);
 
   // Load chart data
   const loadChartData = (chart: Chart) => {

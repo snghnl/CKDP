@@ -1,5 +1,5 @@
 import { Plus, Trash2 } from 'lucide-react';
-import { ChartData } from '../types';
+import { ChartData } from '@extension/shared';
 
 interface ChartTableProps {
   tableData: ChartData;
