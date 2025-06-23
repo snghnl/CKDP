@@ -37,7 +37,7 @@
     "html2canvas": "^1.4.1",
     "lucide-react": "^0.511.0",
     "react-draggable": "^4.4.6",
-    "recharts": "^2.15.3"
+    "recharts": "^3.0.0"
   },
   "devDependencies": {
     "@extension/tailwindcss-config": "workspace:*",
